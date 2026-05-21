@@ -1,4 +1,5 @@
-from sqlalchemy import JSONB, Boolean, Enum, Integer, Numeric, String, Text
+from sqlalchemy import Boolean, Enum, Integer, Numeric, String, Text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base_model import BaseModel
@@ -6,6 +7,8 @@ from app.schemas.menu_schema import MenuCategoryEnum
 
 
 class Menu(BaseModel):
+    __tablename__ = "menus"
+
     category: Mapped[MenuCategoryEnum] = mapped_column(
         Enum(MenuCategoryEnum), nullable=False
     )

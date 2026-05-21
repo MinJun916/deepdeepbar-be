@@ -4,7 +4,7 @@ import uuid
 from enum import StrEnum
 from typing import TYPE_CHECKING
 
-from sqlalchemy import UUID, Boolean, Enum, ForeignKey, Integer
+from sqlalchemy import UUID, Boolean, Enum, ForeignKey, Integer, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base_model import BaseModel
@@ -22,18 +22,28 @@ class PriceTypeEnum(StrEnum):
 class MenuPrice(BaseModel):
     __tablename__ = "menu_prices"
 
+    __table_args__ = (
+        UniqueConstraint(
+            "menu_id",
+            "price_type",
+            name="uq_menu_prices_menu_id_price_type",
+        ),
+    )
+
     menu_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("menus.id", ondelete="CASCADE"),
         nullable=False,
-        unique=True,
     )
 
     price_type: Mapped[PriceTypeEnum] = mapped_column(
-        Enum(PriceTypeEnum),
+        Enum(
+            PriceTypeEnum,
+            name="price_type_enum",
+            values_callable=lambda enum: [item.value for item in enum],
+        ),
         nullable=False,
         default=PriceTypeEnum.default,
-        unique=True,
     )
 
     price: Mapped[int] = mapped_column(

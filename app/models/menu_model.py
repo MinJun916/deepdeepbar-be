@@ -27,7 +27,12 @@ class Menu(BaseModel):
     __tablename__ = "menus"
 
     category: Mapped[MenuCategoryEnum] = mapped_column(
-        Enum(MenuCategoryEnum), nullable=False
+        Enum(
+            MenuCategoryEnum,
+            name="menu_category_enum",
+            values_callable=lambda enum: [item.value for item in enum],
+        ),
+        nullable=False,
     )
 
     name: Mapped[str] = mapped_column(String(255), nullable=False)

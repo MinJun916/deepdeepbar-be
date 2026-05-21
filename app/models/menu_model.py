@@ -58,5 +58,6 @@ class Menu(BaseModel):
 
     prices: Mapped[list["MenuPrice"]] = relationship(
         back_populates="menu",
+        order_by="MenuPrice.display_order",
         cascade="all, delete-orphan",
     )

@@ -1,9 +1,13 @@
+from datetime import datetime, timedelta, timezone
+
 from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.jwt import create_access_token, create_refresh_token
-from app.core.security import verify_password
+from app.core.security import hash_token, verify_password
+from app.models.refresh_token_model import RefreshToken
 from app.models.user_model import User
 
 
@@ -38,6 +42,16 @@ async def login(db: AsyncSession, login_data):
     refresh_token = create_refresh_token(
         user_id=user.id,
     )
+
+    refresh_token_row = RefreshToken(
+        user_id=user.id,
+        token_hash=hash_token(refresh_token),
+        expires_at=datetime.now(timezone.utc)
+        + timedelta(days=settings.refresh_token_expire_days),
+    )
+
+    db.add(refresh_token_row)
+    await db.commit()
 
     return {
         "access_token": access_token,

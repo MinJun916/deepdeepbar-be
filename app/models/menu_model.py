@@ -1,9 +1,24 @@
+from __future__ import annotations
+
+from enum import StrEnum
+from typing import TYPE_CHECKING
+
 from sqlalchemy import Boolean, Enum, Integer, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base_model import BaseModel
-from app.schemas.menu_schema import MenuCategoryEnum
+
+if TYPE_CHECKING:
+    from app.models.recipe_model import Recipe
+
+
+class MenuCategoryEnum(StrEnum):
+    COCKTAIL = "cocktail"
+    WHISKY = "whisky"
+    NON_ALCOHOL = "non-alcohol"
+    HIGHBALL = "highball"
+    SIDE = "side"
 
 
 class Menu(BaseModel):
@@ -27,3 +42,9 @@ class Menu(BaseModel):
     tags: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
 
     is_signature: Mapped[bool] = mapped_column(Boolean, nullable=False)
+
+    recipe: Mapped["Recipe | None"] = relationship(
+        back_populates="menu",
+        cascade="all, delete-orphan",
+        uselist=False,
+    )

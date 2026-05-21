@@ -48,7 +48,7 @@ class Recipe(BaseModel):
     menu: Mapped["Menu"] = relationship(
         back_populates="recipe",
     )
-    glass_type: Mapped["GlassType | None"] = relationship(back_populates="recipes")
+    glass_type: Mapped["GlassType"] = relationship(back_populates="recipes")
 
     steps: Mapped[list["RecipeStep"]] = relationship(
         back_populates="recipe",

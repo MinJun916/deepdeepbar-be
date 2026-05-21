@@ -3,22 +3,24 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, Enum, Integer, Numeric, String, Text
+from sqlalchemy import Boolean, Enum, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base_model import BaseModel
 
 if TYPE_CHECKING:
+    from app.models.menu_price_model import MenuPrice
     from app.models.recipe_model import Recipe
 
 
 class MenuCategoryEnum(StrEnum):
-    COCKTAIL = "cocktail"
-    WHISKY = "whisky"
-    NON_ALCOHOL = "non-alcohol"
-    HIGHBALL = "highball"
-    SIDE = "side"
+    cocktail = "cocktail"
+    whisky = "whisky"
+    non_alcohol = "non-alcohol"
+    highball = "highball"
+    beer = "beer"
+    side = "side"
 
 
 class Menu(BaseModel):
@@ -33,8 +35,6 @@ class Menu(BaseModel):
 
     description: Mapped[str] = mapped_column(Text, nullable=False)
 
-    price: Mapped[int] = mapped_column(Integer, nullable=False)
-
     taste_note: Mapped[str] = mapped_column(Text, nullable=False)
 
     abv: Mapped[float] = mapped_column(Numeric, nullable=False)
@@ -43,8 +43,15 @@ class Menu(BaseModel):
 
     is_signature: Mapped[bool] = mapped_column(Boolean, nullable=False)
 
+    is_display: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+
     recipe: Mapped["Recipe | None"] = relationship(
         back_populates="menu",
         cascade="all, delete-orphan",
         uselist=False,
+    )
+
+    prices: Mapped[list["MenuPrice"]] = relationship(
+        back_populates="menu",
+        cascade="all, delete-orphan",
     )

@@ -27,7 +27,7 @@ class BaseModel(Base):
         onupdate=get_utc_now,
         nullable=False,
     )
-    deleted_at: Mapped[datetime] = mapped_column(
+    deleted_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         default=None,
         nullable=True,

@@ -18,3 +18,7 @@ class RecipeResponse(BaseModel):
     menu: MenuResponseForRecipe
     glass_type: GlassTypeResponse
     steps: list[RecipeStepResponse]
+
+
+class RecipeFilterData(BaseModel):
+    keyword: str | None = None

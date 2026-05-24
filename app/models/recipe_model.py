@@ -47,7 +47,6 @@ class Recipe(BaseModel):
 
     menu: Mapped["Menu"] = relationship(
         back_populates="recipe",
-        order_by="Menu.name",
     )
     glass_type: Mapped["GlassType"] = relationship(back_populates="recipes")
 

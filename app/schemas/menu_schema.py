@@ -16,3 +16,9 @@ class MenuResponse(BaseModel):
     is_signature: bool
     is_display: bool
     prices: list[PriceResponse]
+
+
+class MenuResponseForRecipe(BaseModel):
+    id: uuid.UUID
+    name: str
+    name_en: str

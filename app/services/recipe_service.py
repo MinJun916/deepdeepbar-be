@@ -6,6 +6,6 @@ from app.schemas.recipe_schema import RecipeFilterData
 
 async def get_recipes(
     db: AsyncSession,
-    filter_data: RecipeFilterData | None = None,
+    filter_data: RecipeFilterData,
 ):
     return await find_recipes(db, filter_data)

@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
 import jwt
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.constants.status_code import FORBIDDEN, UNAUTHORIZED
@@ -9,14 +8,16 @@ from app.core.config import settings
 from app.core.exceptions import AppError
 from app.core.jwt import create_access_token, create_refresh_token, decode_token
 from app.core.security import hash_token, verify_password
+from app.crud.auth_crud import (
+    find_refresh_token_by_token_hash,
+    find_user_by_email,
+    find_user_by_id,
+)
 from app.models.refresh_token_model import RefreshToken
-from app.models.user_model import User
 
 
 async def login(db: AsyncSession, login_data):
-    result = await db.execute(select(User).where(User.email == login_data.email))
-
-    user = result.scalar_one_or_none()
+    user = await find_user_by_email(db, login_data.email)
 
     if user is None:
         raise AppError(
@@ -80,14 +81,10 @@ async def refresh_access_token(
 
     user_id = payload.get("sub")
 
-    result = await db.execute(
-        select(RefreshToken).where(
-            RefreshToken.token_hash == hash_token(refresh_token),
-            RefreshToken.revoked_at.is_(None),
-        )
+    saved_token = await find_refresh_token_by_token_hash(
+        db,
+        hash_token(refresh_token),
     )
-
-    saved_token = result.scalar_one_or_none()
 
     if saved_token is None:
         raise AppError(
@@ -95,15 +92,7 @@ async def refresh_access_token(
             message="사용할 수 없는 refresh token입니다.",
         )
 
-    result = await db.execute(select(User).where(User.id == user_id))
-
-    user = result.scalar_one_or_none()
-
-    if user is None or not user.is_active:
-        raise AppError(
-            status_code=UNAUTHORIZED,
-            message="유저를 찾을 수 없습니다.",
-        )
+    user = await find_user_by_id(db, user_id)
 
     access_token = create_access_token(
         user_id=user.id,

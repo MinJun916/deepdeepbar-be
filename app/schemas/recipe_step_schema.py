@@ -10,6 +10,6 @@ class RecipeStepResponse(BaseModel):
     instruction: str
 
 
-class CreateRecipeStepRequest(BaseModel):
+class CreateAndUpdateRecipeStepRequest(BaseModel):
     step_order: int
     instruction: str

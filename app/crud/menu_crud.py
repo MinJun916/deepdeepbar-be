@@ -141,6 +141,7 @@ async def update_menu_crud(
             db.add_all(new_prices)
 
         await db.commit()
+        db.expire(menu, ["prices"])
 
         return await find_menu_by_id_with_prices(db, menu.id)
 

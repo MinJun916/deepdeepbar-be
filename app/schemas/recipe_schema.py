@@ -6,7 +6,10 @@ from pydantic import BaseModel
 from app.schemas.common_schema import OffsetPaginatedResponse
 from app.schemas.glass_type_schema import GlassTypeEnum, GlassTypeResponse
 from app.schemas.menu_schema import MenuResponseForRecipe
-from app.schemas.recipe_step_schema import CreateRecipeStepRequest, RecipeStepResponse
+from app.schemas.recipe_step_schema import (
+    CreateAndUpdateRecipeStepRequest,
+    RecipeStepResponse,
+)
 
 
 class RecipeResponse(BaseModel):
@@ -37,4 +40,12 @@ class CreateRecipeRequest(BaseModel):
     garnish: str | None = None
     mixing_method: str
     notes: str | None = None
-    steps: list[CreateRecipeStepRequest]
+    steps: list[CreateAndUpdateRecipeStepRequest]
+
+
+class UpdateRecipeRequest(BaseModel):
+    glass_type: GlassTypeEnum | None = None
+    garnish: str | None = None
+    mixing_method: str | None = None
+    notes: str | None = None
+    steps: list[CreateAndUpdateRecipeStepRequest] | None = None

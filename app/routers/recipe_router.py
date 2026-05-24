@@ -1,3 +1,4 @@
+import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
@@ -11,8 +12,9 @@ from app.schemas.recipe_schema import (
     RecipeFilterData,
     RecipeListResponse,
     RecipeResponse,
+    UpdateRecipeRequest,
 )
-from app.services.recipe_service import create_recipe, get_recipes
+from app.services.recipe_service import create_recipe, get_recipes, update_recipe
 
 router = APIRouter(prefix="/recipes", tags=["recipes"])
 
@@ -33,3 +35,13 @@ async def add_recipe(
     recipe_data: CreateRecipeRequest,
 ):
     return await create_recipe(db, recipe_data)
+
+
+@router.patch("/{recipe_id}", response_model=RecipeResponse)
+async def patch_recipe(
+    current_user: Annotated[User, Depends(require_staff_or_admin)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    recipe_id: uuid.UUID,
+    recipe_data: UpdateRecipeRequest,
+):
+    return await update_recipe(db, recipe_id, recipe_data)

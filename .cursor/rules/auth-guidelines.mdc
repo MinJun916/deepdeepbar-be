@@ -1,0 +1,58 @@
+---
+description: JWT auth, tokens, roles, dependencies, and password hashing
+globs: app/**/auth*.py,app/core/jwt.py,app/core/security.py
+alwaysApply: false
+---
+
+# Authentication and Authorization
+
+## Strategy
+
+JWT with **access token** + **refresh token**.
+
+## Access token
+
+- API authorization via `Authorization: Bearer <token>`
+- Expires in 1 day (see `app/core/config`)
+- Payload: `sub`, `role`, `type=access`, `exp`
+
+## Refresh token
+
+- Issues a new access token
+- Stored in **HttpOnly cookie** for the client
+- **Hashed** value stored in DB (`RefreshToken.token_hash`)
+
+## Auth API surface
+
+```txt
+POST /auth/login
+POST /auth/refresh
+POST /auth/logout
+GET  /auth/me
+```
+
+## Roles
+
+| Role  | Capabilities                               |
+| ----- | ------------------------------------------ |
+| admin | Create, update, delete data; manage users  |
+| staff | Login; staff pages; read recipe/admin data |
+
+## Dependencies
+
+Implement in `app/dependencies/auth_dependency.py`:
+
+- `get_current_user`
+- `require_admin`
+- `require_staff_or_admin`
+
+Use `AppError` + `UNAUTHORIZED` / `FORBIDDEN` from `app.constants.status_code` — not `HTTPException`.
+
+## Password hashing
+
+Argon2 via `pwdlib` in `app/core/security.py`:
+
+```python
+hash_password(password)
+verify_password(password, password_hash)
+```

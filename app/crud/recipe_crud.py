@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -164,3 +165,21 @@ async def update_recipe_crud(
     except Exception as error:
         await db.rollback()
         raise AppError(status_code=INTERNAL_SERVER_ERROR, message=str(error))
+
+
+async def soft_delete_recipe_crud(db: AsyncSession, recipe_id: uuid.UUID):
+    recipe = await find_recipe_by_id_crud(db, recipe_id)
+
+    if recipe is None:
+        raise AppError(status_code=NOT_FOUND, message="Recipe not found")
+
+    recipe.deleted_at = datetime.now()
+
+    await db.commit()
+    await db.refresh(recipe)
+
+    return {
+        "id": recipe.id,
+        "deleted_at": recipe.deleted_at,
+        "message": "Recipe deleted successfully",
+    }

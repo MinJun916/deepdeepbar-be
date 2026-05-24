@@ -14,7 +14,12 @@ from app.schemas.recipe_schema import (
     RecipeResponse,
     UpdateRecipeRequest,
 )
-from app.services.recipe_service import create_recipe, get_recipes, update_recipe
+from app.services.recipe_service import (
+    create_recipe,
+    get_recipes,
+    soft_delete_recipe,
+    update_recipe,
+)
 
 router = APIRouter(prefix="/recipes", tags=["recipes"])
 
@@ -45,3 +50,12 @@ async def patch_recipe(
     recipe_data: UpdateRecipeRequest,
 ):
     return await update_recipe(db, recipe_id, recipe_data)
+
+
+@router.delete("/{recipe_id}")
+async def remove_recipe(
+    current_user: Annotated[User, Depends(require_staff_or_admin)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    recipe_id: uuid.UUID,
+):
+    return await soft_delete_recipe(db, recipe_id)

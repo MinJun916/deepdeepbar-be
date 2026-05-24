@@ -7,10 +7,12 @@ from app.database.connection import get_db
 from app.dependencies.auth_dependency import require_staff_or_admin
 from app.models.user_model import User
 from app.schemas.recipe_schema import (
+    CreateRecipeRequest,
     RecipeFilterData,
     RecipeListResponse,
+    RecipeResponse,
 )
-from app.services.recipe_service import get_recipes
+from app.services.recipe_service import create_recipe, get_recipes
 
 router = APIRouter(prefix="/recipes", tags=["recipes"])
 
@@ -22,3 +24,12 @@ async def read_recipes(
     filter_data: Annotated[RecipeFilterData, Depends()],
 ):
     return await get_recipes(db, filter_data)
+
+
+@router.post("/", response_model=RecipeResponse)
+async def add_recipe(
+    current_user: Annotated[User, Depends(require_staff_or_admin)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    recipe_data: CreateRecipeRequest,
+):
+    return await create_recipe(db, recipe_data)

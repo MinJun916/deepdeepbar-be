@@ -18,3 +18,10 @@ class CreatePriceRequest(BaseModel):
     price: int
     display_order: int
     is_active: bool = True
+
+
+class UpdatePriceRequest(BaseModel):
+    price_type: PriceTypeEnum
+    price: int
+    display_order: int
+    is_active: bool

@@ -1,7 +1,17 @@
+import uuid
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.crud.menu_crud import create_menu_crud, find_displayed_menus_with_offset
-from app.schemas.menu_schema import CreateMenuRequest, MenuOffsetFilterData
+from app.crud.menu_crud import (
+    create_menu_crud,
+    find_displayed_menus_with_offset,
+    update_menu_crud,
+)
+from app.schemas.menu_schema import (
+    CreateMenuRequest,
+    MenuOffsetFilterData,
+    UpdateMenuRequest,
+)
 
 
 async def get_displayed_menus_with_offset(
@@ -16,3 +26,11 @@ async def create_menu(
     menu_data: CreateMenuRequest,
 ):
     return await create_menu_crud(db, menu_data)
+
+
+async def update_menu(
+    db: AsyncSession,
+    menu_id: uuid.UUID,
+    menu_data: UpdateMenuRequest,
+):
+    return await update_menu_crud(db, menu_id, menu_data)

@@ -1,14 +1,20 @@
+import uuid
+
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.constants.status_code import INTERNAL_SERVER_ERROR
+from app.constants.status_code import INTERNAL_SERVER_ERROR, NOT_FOUND
 from app.core.exceptions import AppError
 from app.crud.common.pagination_crud import apply_offset_pagination
 from app.crud.queries.menu_query import get_displayed_menu_query
 from app.models.menu_model import Menu
 from app.models.menu_price_model import MenuPrice
-from app.schemas.menu_schema import CreateMenuRequest, MenuOffsetFilterData
+from app.schemas.menu_schema import (
+    CreateMenuRequest,
+    MenuOffsetFilterData,
+    UpdateMenuRequest,
+)
 
 MENU_ORDER_BY = (
     desc(Menu.is_signature),
@@ -82,6 +88,55 @@ async def create_menu_crud(
         await db.commit()
 
         return await find_menu_by_id_with_prices(db, menu.id)
+
+    except Exception as error:
+        await db.rollback()
+        raise AppError(status_code=INTERNAL_SERVER_ERROR, message=str(error))
+
+
+async def update_menu_crud(
+    db: AsyncSession,
+    menu_id: uuid.UUID,
+    menu_data: UpdateMenuRequest,
+):
+    try:
+        menu = await find_menu_by_id_with_prices(db, menu_id)
+
+        if menu is None:
+            raise AppError(status_code=NOT_FOUND, message="메뉴를 찾을 수 없습니다.")
+
+        update_data = menu_data.model_dump(
+            exclude_unset=True,
+            exclude={"prices"},
+        )
+
+        for key, value in update_data.items():
+            setattr(menu, key, value)
+
+        if menu_data.prices is not None:
+            for price in menu.prices:
+                await db.delete(price)
+
+            await db.flush()
+
+            new_prices = [
+                MenuPrice(
+                    menu_id=menu.id,
+                    price_type=price_data.price_type,
+                    price=price_data.price,
+                    display_order=price_data.display_order,
+                    is_active=price_data.is_active,
+                )
+                for price_data in menu_data.prices
+            ]
+            db.add_all(new_prices)
+
+        await db.commit()
+
+        return await find_menu_by_id_with_prices(db, menu.id)
+
+    except AppError:
+        raise
 
     except Exception as error:
         await db.rollback()

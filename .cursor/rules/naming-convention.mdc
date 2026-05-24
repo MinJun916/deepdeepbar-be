@@ -12,8 +12,8 @@ alwaysApply: false
 read_menus
 read_menu
 add_menu
-update_menu
-delete_menu
+patch_menu
+remove_menu
 ```
 
 ## Service functions

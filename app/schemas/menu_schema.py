@@ -5,7 +5,11 @@ from pydantic import BaseModel
 
 from app.models.menu_model import MenuCategoryEnum
 from app.schemas.common_schema import OffsetPaginatedResponse
-from app.schemas.menu_price_schema import CreatePriceRequest, PriceResponse
+from app.schemas.menu_price_schema import (
+    CreatePriceRequest,
+    PriceResponse,
+    UpdatePriceRequest,
+)
 
 
 class MenuResponse(BaseModel):
@@ -46,3 +50,16 @@ class CreateMenuRequest(BaseModel):
     is_signature: bool
     is_display: bool
     prices: list[CreatePriceRequest]
+
+
+class UpdateMenuRequest(BaseModel):
+    category: MenuCategoryEnum | None = None
+    name: str | None = None
+    name_en: str | None = None
+    description: str | None = None
+    taste_note: str | None = None
+    abv: float | None = None
+    tags: list[str] | None = None
+    is_signature: bool | None = None
+    is_display: bool | None = None
+    prices: list[UpdatePriceRequest] | None = None

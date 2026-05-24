@@ -1,3 +1,4 @@
+import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
@@ -11,10 +12,12 @@ from app.schemas.menu_schema import (
     MenuOffsetFilterData,
     MenuOffsetResponse,
     MenuResponse,
+    UpdateMenuRequest,
 )
 from app.services.menu_service import (
     create_menu,
     get_displayed_menus_with_offset,
+    update_menu,
 )
 
 router = APIRouter(prefix="/menus", tags=["menus"])
@@ -35,3 +38,13 @@ async def add_menu(
     menu_data: CreateMenuRequest,
 ):
     return await create_menu(db, menu_data)
+
+
+@router.patch("/{menu_id}", response_model=MenuResponse)
+async def patch_menu(
+    current_user: Annotated[User, Depends(require_admin)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    menu_id: uuid.UUID,
+    menu_data: UpdateMenuRequest,
+):
+    return await update_menu(db, menu_id, menu_data)

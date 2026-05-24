@@ -1,0 +1,79 @@
+---
+description: FastAPI async patterns, DI, routers, queries, commits, and AppError usage
+globs: app/**/*.py
+alwaysApply: false
+---
+
+# FastAPI Style Guide
+
+## Async first
+
+All DB-related routes and services are `async`:
+
+```python
+async def read_menus(...):
+    return await get_menus(...)
+```
+
+## Dependency injection
+
+Use `Annotated` style:
+
+```python
+db: Annotated[AsyncSession, Depends(get_db)]
+current_user: Annotated[User, Depends(get_current_user)]
+```
+
+## Router style
+
+```python
+router = APIRouter(prefix="/menus", tags=["menus"])
+
+@router.get("/", response_model=list[MenuResponse])
+async def read_menus(...):
+    ...
+```
+
+## Errors
+
+Do **not** use `HTTPException` in services, CRUD, or dependencies.
+
+Use `AppError` with constants from `app.constants.status_code`:
+
+```python
+from app.constants.status_code import NOT_FOUND
+from app.core.exceptions import AppError
+
+raise AppError(status_code=NOT_FOUND, message="메뉴를 찾을 수 없습니다.")
+```
+
+Handler is registered in `app/main.py` (`app_error_handler`). Response body: `{"detail": "<message>"}`.
+
+## SQLAlchemy query style
+
+```python
+result = await db.execute(select(Menu))
+menus = result.scalars().all()
+
+result = await db.execute(select(Menu).where(Menu.id == menu_id))
+menu = result.scalar_one_or_none()
+```
+
+## Relationship loading
+
+Default to `selectinload()`:
+
+```python
+select(Menu).options(
+    selectinload(Menu.prices),
+    selectinload(Menu.recipe),
+)
+```
+
+## Commits
+
+```python
+db.add(model)
+await db.commit()
+await db.refresh(model)
+```

@@ -1,0 +1,51 @@
+---
+description: Git commit message format and types — apply when staging, committing, or drafting commit messages in this repo
+alwaysApply: false
+---
+
+# Commit Message Convention
+
+Use this format for every commit in this repository.
+
+## Format
+
+```txt
+<type>: <summary>
+```
+
+## Allowed types
+
+| Type     | Use for                             |
+| -------- | ----------------------------------- |
+| feat     | New feature                         |
+| fix      | Bug fix                             |
+| refactor | Code change without behavior change |
+| perf     | Performance improvement             |
+| docs     | Documentation only                  |
+| test     | Tests added or updated              |
+| chore    | Config, deps, CI, build scripts     |
+| style    | Formatting only, no logic change    |
+
+## Rules
+
+- Lowercase type
+- Summary under 50 characters, no trailing period
+- Imperative present tense (`add`, `fix`, `remove`)
+- Describe **what** changed, not **why**
+- Base the message **only** on staged diff — do not invent changes
+- One logical change per commit; split unrelated work
+
+## Language
+
+- Summary in **English**
+- Avoid vague verbs: `update`, `change`, `modify`
+
+## Examples
+
+```txt
+feat: add infinite scroll to estimate list
+fix: prevent duplicate notification creation
+refactor: extract notification creation logic
+perf: reduce query time with index
+chore: disable automatic seed on deploy
+```

@@ -4,6 +4,8 @@ from fastapi import APIRouter, Cookie, Depends, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.connection import get_db
+from app.dependencies.auth_dependency import get_current_user
+from app.models.user_model import User
 from app.schemas.auth_schema import (
     LoginRequest,
     LoginResponse,
@@ -46,3 +48,13 @@ async def refresh_token(
         db=db,
         refresh_token=refresh_token,
     )
+
+
+@router.get("/me")
+async def read_me(current_user: Annotated[User, Depends(get_current_user)]):
+    return {
+        "id": current_user.id,
+        "email": current_user.email,
+        "name": current_user.name,
+        "role": current_user.role,
+    }

@@ -52,5 +52,6 @@ class Recipe(BaseModel):
 
     steps: Mapped[list["RecipeStep"]] = relationship(
         back_populates="recipe",
+        order_by="RecipeStep.step_order",
         cascade="all, delete-orphan",
     )

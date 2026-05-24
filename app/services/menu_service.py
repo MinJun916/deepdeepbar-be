@@ -1,20 +1,11 @@
-from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
-from app.models.menu_model import Menu
+from app.crud.menu_crud import find_displayed_menus_with_offset
+from app.schemas.menu_schema import MenuOffsetFilterData
 
 
-async def get_menus(
+async def get_displayed_menus_with_offset(
     db: AsyncSession,
+    filter_data: MenuOffsetFilterData,
 ):
-    result = await db.execute(
-        select(Menu)
-        .options(selectinload(Menu.prices))
-        .order_by(
-            desc(Menu.is_signature),
-            Menu.name.asc(),
-        ),
-    )
-
-    return result.scalars().all()
+    return await find_displayed_menus_with_offset(db, filter_data)

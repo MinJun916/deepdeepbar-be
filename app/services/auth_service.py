@@ -1,38 +1,40 @@
 from datetime import datetime, timedelta, timezone
 
 import jwt
-from fastapi import HTTPException
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.constants.status_code import FORBIDDEN, UNAUTHORIZED
 from app.core.config import settings
+from app.core.exceptions import AppError
 from app.core.jwt import create_access_token, create_refresh_token, decode_token
 from app.core.security import hash_token, verify_password
+from app.crud.auth_crud import (
+    find_refresh_token_by_token_hash,
+    find_user_by_email,
+    find_user_by_id,
+)
 from app.models.refresh_token_model import RefreshToken
-from app.models.user_model import User
 
 
 async def login(db: AsyncSession, login_data):
-    result = await db.execute(select(User).where(User.email == login_data.email))
-
-    user = result.scalar_one_or_none()
+    user = await find_user_by_email(db, login_data.email)
 
     if user is None:
-        raise HTTPException(
-            status_code=401,
-            detail="Unauthorized",
+        raise AppError(
+            status_code=UNAUTHORIZED,
+            message="Unauthorized",
         )
 
     if not verify_password(login_data.password, user.password_hash):
-        raise HTTPException(
-            status_code=401,
-            detail="비밀번호 또는 이메일이 일치하지 않습니다.",
+        raise AppError(
+            status_code=UNAUTHORIZED,
+            message="비밀번호 또는 이메일이 일치하지 않습니다.",
         )
 
     if not user.is_active:
-        raise HTTPException(
-            status_code=403,
-            detail="비활성화 처리된 유저입니다.",
+        raise AppError(
+            status_code=FORBIDDEN,
+            message="비활성화 처리된 유저입니다.",
         )
 
     access_token = create_access_token(
@@ -69,40 +71,28 @@ async def refresh_access_token(
         payload = decode_token(refresh_token)
 
     except jwt.PyJWTError:
-        raise HTTPException(
-            status_code=401,
-            detail="유효하지 않은 토큰입니다.",
+        raise AppError(
+            status_code=UNAUTHORIZED,
+            message="유효하지 않은 토큰입니다.",
         )
 
     if payload.get("type") != "refresh":
-        raise HTTPException(status_code=401, detail="유효하지 않은 토큰입니다.")
+        raise AppError(status_code=UNAUTHORIZED, message="유효하지 않은 토큰입니다.")
 
     user_id = payload.get("sub")
 
-    result = await db.execute(
-        select(RefreshToken).where(
-            RefreshToken.token_hash == hash_token(refresh_token),
-            RefreshToken.revoked_at.is_(None),
-        )
+    saved_token = await find_refresh_token_by_token_hash(
+        db,
+        hash_token(refresh_token),
     )
 
-    saved_token = result.scalar_one_or_none()
-
     if saved_token is None:
-        raise HTTPException(
-            status_code=401,
-            detail="사용할 수 없는 refresh token입니다.",
+        raise AppError(
+            status_code=UNAUTHORIZED,
+            message="사용할 수 없는 refresh token입니다.",
         )
 
-    result = await db.execute(select(User).where(User.id == user_id))
-
-    user = result.scalar_one_or_none()
-
-    if user is None or not user.is_active:
-        raise HTTPException(
-            status_code=401,
-            detail="유저를 찾을 수 없습니다.",
-        )
+    user = await find_user_by_id(db, user_id)
 
     access_token = create_access_token(
         user_id=user.id,

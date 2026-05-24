@@ -1,0 +1,73 @@
+---
+description: Naming conventions for routers, services, CRUD, schemas, and models
+globs: app/**/*.py
+alwaysApply: false
+---
+
+# Naming Conventions
+
+## Router functions
+
+```python
+read_menus
+read_menu
+create_menu
+update_menu
+delete_menu
+```
+
+## Service functions
+
+```python
+get_menus
+get_menu
+create_menu
+update_menu
+delete_menu
+login
+refresh_access_token
+```
+
+## CRUD functions
+
+```python
+find_menus
+find_menu_by_id
+find_user_by_email
+create_menu
+update_menu
+soft_delete_menu
+```
+
+## `get_` vs `find_`
+
+| Layer   | Prefix  | Example           |
+| ------- | ------- | ----------------- |
+| Service | `get_`  | `get_menu`        |
+| CRUD    | `find_` | `find_menu_by_id` |
+
+## Schemas
+
+```python
+LoginRequest
+LoginResponse
+CreateMenuRequest
+UpdateMenuRequest
+MenuResponse
+MenuDetailResponse
+```
+
+## Models
+
+- Class names: singular (`Menu`, `Recipe`, `User`)
+- Table names: plural (`__tablename__ = "menus"`)
+
+## Enums
+
+Class names end with `Enum`:
+
+```python
+MenuCategoryEnum
+PriceTypeEnum
+UserRoleEnum
+```

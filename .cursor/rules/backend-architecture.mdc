@@ -1,0 +1,96 @@
+---
+description: Backend layer responsibilities, project layout, SQLAlchemy and soft-delete rules
+alwaysApply: true
+---
+
+# Backend Architecture
+
+## Tech Stack
+
+- FastAPI
+- Python 3.14+
+- SQLAlchemy 2.x + AsyncSession
+- PostgreSQL + Alembic
+- JWT authentication
+
+## Project Structure
+
+```txt
+app/
+├── routers/
+├── services/
+├── crud/
+├── models/
+├── schemas/
+├── dependencies/
+├── core/
+├── constants/
+├── database/
+└── utils/
+```
+
+## Layer Responsibilities
+
+### Router
+
+**Responsible for:**
+
+- API path definitions
+- Request/response schema wiring
+- Dependency injection
+- Auth dependency attachment
+
+**Must not contain:**
+
+- Raw SQLAlchemy queries
+- Business logic
+- Complex validation logic
+
+### Service
+
+**Responsible for:**
+
+- Business logic
+- Validation flow
+- Orchestrating one or more CRUD calls
+- Raising `AppError` (see fastapi-style-guide)
+
+**Must not contain:**
+
+- FastAPI route decorators
+- Direct HTTP request/response handling
+
+### CRUD
+
+**Responsible for:**
+
+- Pure database access
+- `select` / `update` / `delete` with SQLAlchemy 2.x
+- Relationship loading (`selectinload`, etc.)
+- Pagination query execution
+
+**Must not contain:**
+
+- JWT or permission checks
+- HTTP-specific logic
+
+**Target state:** DB queries live in `crud/`, not in `services/`. When adding features, prefer CRUD + thin service.
+
+## SQLAlchemy Rules
+
+- Always SQLAlchemy 2.x style with `AsyncSession`
+- Always use `select()` — never `db.query()`
+- List: `result.scalars().all()`
+- Single nullable: `result.scalar_one_or_none()`
+- Prefer `selectinload()` for relationships
+- Set default ordering on relationships when needed: `relationship(..., order_by=...)`
+
+## Soft Delete
+
+Use `deleted_at` on `BaseModel` when soft delete applies.
+
+Default queries must exclude deleted rows:
+
+```python
+Model.deleted_at.is_(None)
+```

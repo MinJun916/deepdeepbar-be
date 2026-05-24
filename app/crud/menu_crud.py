@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,6 +21,14 @@ MENU_ORDER_BY = (
     desc(Menu.is_signature),
     Menu.name.asc(),
 )
+
+
+async def find_menu_by_id_crud(
+    db: AsyncSession,
+    menu_id: uuid.UUID,
+):
+    result = await db.execute(select(Menu).where(Menu.id == menu_id))
+    return result.scalar_one_or_none()
 
 
 async def find_displayed_menus_with_offset(
@@ -100,7 +109,7 @@ async def update_menu_crud(
     menu_data: UpdateMenuRequest,
 ):
     try:
-        menu = await find_menu_by_id_with_prices(db, menu_id)
+        menu = await find_menu_by_id_crud(db, menu_id)
 
         if menu is None:
             raise AppError(status_code=NOT_FOUND, message="메뉴를 찾을 수 없습니다.")
@@ -141,3 +150,24 @@ async def update_menu_crud(
     except Exception as error:
         await db.rollback()
         raise AppError(status_code=INTERNAL_SERVER_ERROR, message=str(error))
+
+
+async def soft_delete_menu_crud(
+    db: AsyncSession,
+    menu_id: uuid.UUID,
+):
+    menu = await find_menu_by_id_crud(db, menu_id)
+
+    if menu is None:
+        raise AppError(status_code=NOT_FOUND, message="메뉴를 찾을 수 없습니다.")
+
+    menu.deleted_at = datetime.now()
+
+    await db.commit()
+    await db.refresh(menu)
+
+    return {
+        "id": menu.id,
+        "deleted_at": menu.deleted_at,
+        "message": "메뉴가 삭제되었습니다.",
+    }

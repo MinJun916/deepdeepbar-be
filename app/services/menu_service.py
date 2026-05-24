@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.crud.menu_crud import (
     create_menu_crud,
     find_displayed_menus_with_offset,
+    soft_delete_menu_crud,
     update_menu_crud,
 )
 from app.schemas.menu_schema import (
@@ -34,3 +35,10 @@ async def update_menu(
     menu_data: UpdateMenuRequest,
 ):
     return await update_menu_crud(db, menu_id, menu_data)
+
+
+async def soft_delete_menu(
+    db: AsyncSession,
+    menu_id: uuid.UUID,
+):
+    return await soft_delete_menu_crud(db, menu_id)

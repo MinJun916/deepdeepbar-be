@@ -17,6 +17,7 @@ from app.schemas.menu_schema import (
 from app.services.menu_service import (
     create_menu,
     get_displayed_menus_with_offset,
+    soft_delete_menu,
     update_menu,
 )
 
@@ -48,3 +49,12 @@ async def patch_menu(
     menu_data: UpdateMenuRequest,
 ):
     return await update_menu(db, menu_id, menu_data)
+
+
+@router.delete("/{menu_id}", response_model=dict)
+async def remove_menu(
+    current_user: Annotated[User, Depends(require_admin)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    menu_id: uuid.UUID,
+):
+    return await soft_delete_menu(db, menu_id)

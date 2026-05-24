@@ -1,3 +1,4 @@
+import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
@@ -7,10 +8,18 @@ from app.database.connection import get_db
 from app.dependencies.auth_dependency import require_staff_or_admin
 from app.models.user_model import User
 from app.schemas.recipe_schema import (
+    CreateRecipeRequest,
     RecipeFilterData,
     RecipeListResponse,
+    RecipeResponse,
+    UpdateRecipeRequest,
 )
-from app.services.recipe_service import get_recipes
+from app.services.recipe_service import (
+    create_recipe,
+    get_recipes,
+    soft_delete_recipe,
+    update_recipe,
+)
 
 router = APIRouter(prefix="/recipes", tags=["recipes"])
 
@@ -22,3 +31,31 @@ async def read_recipes(
     filter_data: Annotated[RecipeFilterData, Depends()],
 ):
     return await get_recipes(db, filter_data)
+
+
+@router.post("/", response_model=RecipeResponse)
+async def add_recipe(
+    current_user: Annotated[User, Depends(require_staff_or_admin)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    recipe_data: CreateRecipeRequest,
+):
+    return await create_recipe(db, recipe_data)
+
+
+@router.patch("/{recipe_id}", response_model=RecipeResponse)
+async def patch_recipe(
+    current_user: Annotated[User, Depends(require_staff_or_admin)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    recipe_id: uuid.UUID,
+    recipe_data: UpdateRecipeRequest,
+):
+    return await update_recipe(db, recipe_id, recipe_data)
+
+
+@router.delete("/{recipe_id}")
+async def remove_recipe(
+    current_user: Annotated[User, Depends(require_staff_or_admin)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    recipe_id: uuid.UUID,
+):
+    return await soft_delete_recipe(db, recipe_id)

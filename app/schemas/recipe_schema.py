@@ -4,9 +4,12 @@ from fastapi import Query
 from pydantic import BaseModel
 
 from app.schemas.common_schema import OffsetPaginatedResponse
-from app.schemas.glass_type_schema import GlassTypeResponse
+from app.schemas.glass_type_schema import GlassTypeEnum, GlassTypeResponse
 from app.schemas.menu_schema import MenuResponseForRecipe
-from app.schemas.recipe_step_schema import RecipeStepResponse
+from app.schemas.recipe_step_schema import (
+    CreateAndUpdateRecipeStepRequest,
+    RecipeStepResponse,
+)
 
 
 class RecipeResponse(BaseModel):
@@ -29,3 +32,20 @@ class RecipeFilterData(BaseModel):
     keyword: str | None = None
     offset: int = Query(default=0, ge=0)
     limit: int = Query(default=20, ge=1, le=100)
+
+
+class CreateRecipeRequest(BaseModel):
+    menu_id: uuid.UUID
+    glass_type: GlassTypeEnum
+    garnish: str | None = None
+    mixing_method: str
+    notes: str | None = None
+    steps: list[CreateAndUpdateRecipeStepRequest]
+
+
+class UpdateRecipeRequest(BaseModel):
+    glass_type: GlassTypeEnum | None = None
+    garnish: str | None = None
+    mixing_method: str | None = None
+    notes: str | None = None
+    steps: list[CreateAndUpdateRecipeStepRequest] | None = None

@@ -11,9 +11,9 @@ alwaysApply: false
 ```python
 read_menus
 read_menu
-create_menu
-update_menu
-delete_menu
+add_menu
+patch_menu
+remove_menu
 ```
 
 ## Service functions
@@ -34,9 +34,9 @@ refresh_access_token
 find_menus
 find_menu_by_id
 find_user_by_email
-create_menu
-update_menu
-soft_delete_menu
+create_menu_crud
+update_menu_crud
+soft_delete_menu_crud
 ```
 
 ## `get_` vs `find_`

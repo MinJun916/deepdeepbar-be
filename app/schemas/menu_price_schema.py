@@ -11,4 +11,17 @@ class PriceResponse(BaseModel):
     price_type: PriceTypeEnum
     price: int
     display_order: int
+
+
+class CreatePriceRequest(BaseModel):
+    price_type: PriceTypeEnum
+    price: int
+    display_order: int
+    is_active: bool = True
+
+
+class UpdatePriceRequest(BaseModel):
+    price_type: PriceTypeEnum
+    price: int
+    display_order: int
     is_active: bool

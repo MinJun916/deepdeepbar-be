@@ -8,3 +8,8 @@ class RecipeStepResponse(BaseModel):
     recipe_id: uuid.UUID
     step_order: int
     instruction: str
+
+
+class CreateAndUpdateRecipeStepRequest(BaseModel):
+    step_order: int
+    instruction: str

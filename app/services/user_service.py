@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.constants.status_code import BAD_REQUEST, INTERNAL_SERVER_ERROR, NOT_FOUND
 from app.core.exceptions import AppError
+from app.core.logger import logger
 from app.core.security import hash_token
 from app.crud.user_crud import (
     create_user_crud,
@@ -44,8 +45,12 @@ async def create_user(
     except AppError:
         raise
 
-    except Exception as error:
-        raise AppError(status_code=INTERNAL_SERVER_ERROR, message=str(error))
+    except Exception:
+        logger.exception("create_user_failed", email=user_data.email)
+        raise AppError(
+            status_code=INTERNAL_SERVER_ERROR,
+            message="유저 생성 중 오류가 발생했습니다.",
+        )
 
 
 async def update_user(
@@ -74,8 +79,12 @@ async def update_user(
     except AppError:
         raise
 
-    except Exception as error:
-        raise AppError(status_code=INTERNAL_SERVER_ERROR, message=str(error))
+    except Exception:
+        logger.exception("update_user_failed", user_id=str(user_id))
+        raise AppError(
+            status_code=INTERNAL_SERVER_ERROR,
+            message="유저 수정 중 오류가 발생했습니다.",
+        )
 
 
 async def deactivate_user(
@@ -97,5 +106,9 @@ async def deactivate_user(
     except AppError:
         raise
 
-    except Exception as error:
-        raise AppError(status_code=INTERNAL_SERVER_ERROR, message=str(error))
+    except Exception:
+        logger.exception("deactivate_user_failed", user_id=str(user_id))
+        raise AppError(
+            status_code=INTERNAL_SERVER_ERROR,
+            message="유저 비활성화 중 오류가 발생했습니다.",
+        )

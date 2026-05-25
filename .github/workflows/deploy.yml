@@ -17,6 +17,10 @@ jobs:
       IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/deepdeepbar-be
 
     steps:
+      - name: Convert owner to lowercase
+        run: |
+          echo "::set-output name=owner::$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')"
+
       - name: Checkout
         uses: actions/checkout@v4
 

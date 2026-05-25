@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 
 import app.models
-from app.core.exceptions import AppError, app_error_handler
+from app.core.exceptions import AppError, app_error_handler, unhandled_exception_handler
+from app.middlewares.logging_middleware import LoggingMiddleware
 from app.routers.admin_user_router import router as admin_user_router
 from app.routers.auth_router import router as auth_router
 from app.routers.menu_router import router as menu_router
@@ -49,6 +50,9 @@ app.include_router(recipe_router)
 app.include_router(admin_user_router)
 
 app.add_exception_handler(AppError, app_error_handler)
+app.add_exception_handler(Exception, unhandled_exception_handler)
+
+app.add_middleware(LoggingMiddleware)
 
 
 @app.get("/health", tags=["health"])

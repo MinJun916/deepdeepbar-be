@@ -6,7 +6,7 @@ Python + FastAPI 기반으로 구성되어 있습니다.
 
 ## API Docs
 
-- Production: (도메인 미정)
+- Production: `https://deepdeep-api.gomoving.shop/docs`
 - Local: `http://localhost:8000/docs`
 
 ## Tech Stack

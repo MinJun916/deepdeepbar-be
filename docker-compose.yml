@@ -1,7 +1,7 @@
 services:
-  deepdeepbar-api:
-    build: .
-    container_name: deepdeepbar-api
+  deepdeepbar-be:
+    image: ghcr.io/MinJun916/deepdeepbar-be
+    container_name: deepdeepbar-be
     restart: unless-stopped
     env_file:
       - .env

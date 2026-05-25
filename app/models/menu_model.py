@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, Enum, Numeric, String, Text
+from sqlalchemy import Boolean, Enum, Numeric, String, Text, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -49,6 +49,13 @@ class Menu(BaseModel):
     is_signature: Mapped[bool] = mapped_column(Boolean, nullable=False)
 
     is_display: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+
+    is_sold_out: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default=text("false"),
+    )
 
     recipe: Mapped["Recipe | None"] = relationship(
         back_populates="menu",

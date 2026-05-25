@@ -22,6 +22,7 @@ class MenuResponse(BaseModel):
     tags: list[str]
     is_signature: bool
     is_display: bool
+    is_sold_out: bool
     prices: list[PriceResponse]
 
 

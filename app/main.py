@@ -46,17 +46,9 @@ app = FastAPI(
 )
 
 allowed_origins = [
-    "http://localhost:3000",
+    "https://localhost:3000",
     "https://deepdeepbar.vercel.app",
 ]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 app.include_router(menu_router)
 app.include_router(auth_router)
@@ -67,6 +59,14 @@ app.add_exception_handler(AppError, app_error_handler)
 app.add_exception_handler(Exception, unhandled_exception_handler)
 
 app.add_middleware(LoggingMiddleware)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/health", tags=["health"])

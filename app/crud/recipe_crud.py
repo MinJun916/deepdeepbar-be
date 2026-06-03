@@ -7,7 +7,6 @@ from sqlalchemy.orm import selectinload
 
 from app.constants.status_code import INTERNAL_SERVER_ERROR, NOT_FOUND
 from app.core.exceptions import AppError
-from app.crud.common.pagination_crud import apply_offset_pagination
 from app.crud.glass_type_crud import find_glass_type_id_by_code_crud
 from app.crud.queries.recipe_query import get_active_recipe_query
 from app.models.menu_model import Menu
@@ -47,12 +46,8 @@ async def find_recipes(db: AsyncSession, filter_data: RecipeFilterData):
     if filter_data.keyword is not None:
         query = apply_recipe_filter(query, filter_data)
 
-    return await apply_offset_pagination(
-        db=db,
-        query=query,
-        offset=filter_data.offset,
-        limit=filter_data.limit,
-    )
+    result = await db.execute(query)
+    return result.scalars().all()
 
 
 async def find_recipe_by_id_with_relations_crud(db: AsyncSession, recipe_id: uuid.UUID):

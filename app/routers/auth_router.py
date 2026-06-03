@@ -11,7 +11,8 @@ from app.schemas.auth_schema import (
     LoginResponse,
     RefreshResponse,
 )
-from app.services.auth_service import login, refresh_access_token
+from app.schemas.user_schema import UserResponse
+from app.services.auth_service import create_admin, login, refresh_access_token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -58,3 +59,10 @@ async def read_me(current_user: Annotated[User, Depends(get_current_user)]):
         "name": current_user.name,
         "role": current_user.role,
     }
+
+
+@router.post("/admin", response_model=UserResponse)
+async def add_admin(
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    return await create_admin(db)

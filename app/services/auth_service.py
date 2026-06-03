@@ -3,17 +3,19 @@ from datetime import datetime, timedelta, timezone
 import jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.constants.status_code import FORBIDDEN, UNAUTHORIZED
+from app.constants.status_code import BAD_REQUEST, FORBIDDEN, UNAUTHORIZED
 from app.core.config import settings
 from app.core.exceptions import AppError
 from app.core.jwt import create_access_token, create_refresh_token, decode_token
 from app.core.security import hash_token, verify_password
 from app.crud.auth_crud import (
+    create_admin_crud,
     find_refresh_token_by_token_hash,
     find_user_by_email,
     find_user_by_id,
 )
 from app.models.refresh_token_model import RefreshToken
+from app.models.user_model import UserRole
 
 
 async def login(db: AsyncSession, login_data):
@@ -103,3 +105,23 @@ async def refresh_access_token(
         "access_token": access_token,
         "token_type": "Bearer",
     }
+
+
+async def create_admin(
+    db: AsyncSession,
+):
+    admin_data = {
+        "email": "admin@deepdeep.com",
+        "password_hash": "deepdeep",
+        "name": "Admin",
+        "role": UserRole.admin,
+        "is_active": True,
+    }
+
+    if await find_user_by_email(db, admin_data["email"]) is not None:
+        raise AppError(
+            status_code=BAD_REQUEST,
+            message="이미 존재하는 이메일입니다.",
+        )
+
+    return await create_admin_crud(db, admin_data)

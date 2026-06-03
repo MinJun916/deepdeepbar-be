@@ -38,7 +38,7 @@ app = FastAPI(
     version="1.0.0",
     openapi_tags=tags_metadata,
     swagger_ui_parameters={
-        "defaultModelsExpandDepth": -1,
+        "defaultModelsExpandDepth": 1,
         "docExpansion": "none",
         "displayRequestDuration": True,
         "filter": True,

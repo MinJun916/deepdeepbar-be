@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 import app.models
 from app.core.exceptions import AppError, app_error_handler, unhandled_exception_handler
@@ -42,6 +43,19 @@ app = FastAPI(
         "displayRequestDuration": True,
         "filter": True,
     },
+)
+
+allowed_origins = [
+    "http://localhost:3000",
+    "https://deepdeepbar.vercel.app",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(menu_router)

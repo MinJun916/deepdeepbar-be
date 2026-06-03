@@ -1,6 +1,6 @@
 services:
   deepdeepbar-be:
-    image: ghcr.io/MinJun916/deepdeepbar-be
+    image: ghcr.io/minjun916/deepdeepbar-be:latest
     container_name: deepdeepbar-be
     restart: unless-stopped
     env_file:

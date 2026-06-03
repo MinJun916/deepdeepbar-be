@@ -1,5 +1,7 @@
 from pydantic import BaseModel
 
+from app.models.user_model import UserRole
+
 
 class LoginRequest(BaseModel):
     email: str
@@ -18,3 +20,11 @@ class RefreshRequest(BaseModel):
 class RefreshResponse(BaseModel):
     access_token: str
     token_type: str = "Bearer"
+
+
+class CreateAdminRequest(BaseModel):
+    email: str
+    password_hash: str
+    name: str
+    role: UserRole = UserRole.admin
+    is_active: bool = True

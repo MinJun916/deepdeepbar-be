@@ -17,6 +17,7 @@ class MenuResponse(BaseModel):
     name: str
     name_en: str
     description: str
+    category: MenuCategoryEnum
     taste_note: str
     abv: float
     tags: list[str]

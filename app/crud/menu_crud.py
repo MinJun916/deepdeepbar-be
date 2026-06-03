@@ -7,13 +7,11 @@ from sqlalchemy.orm import selectinload
 
 from app.constants.status_code import INTERNAL_SERVER_ERROR, NOT_FOUND
 from app.core.exceptions import AppError
-from app.crud.common.pagination_crud import apply_offset_pagination
 from app.crud.queries.menu_query import get_displayed_menu_query
 from app.models.menu_model import Menu
 from app.models.menu_price_model import MenuPrice
 from app.schemas.menu_schema import (
     CreateMenuRequest,
-    MenuOffsetFilterData,
     UpdateMenuRequest,
 )
 
@@ -31,9 +29,26 @@ async def find_menu_by_id_crud(
     return result.scalar_one_or_none()
 
 
-async def find_displayed_menus_with_offset(
+# async def find_displayed_menus_with_offset(
+#     db: AsyncSession,
+#     filter_data: MenuOffsetFilterData,
+# ):
+#     query = (
+#         get_displayed_menu_query()
+#         .options(selectinload(Menu.prices))
+#         .order_by(*MENU_ORDER_BY)
+#     )
+
+#     return await apply_offset_pagination(
+#         db=db,
+#         query=query,
+#         offset=filter_data.offset,
+#         limit=filter_data.limit,
+#     )
+
+
+async def find_displayed_menus_crud(
     db: AsyncSession,
-    filter_data: MenuOffsetFilterData,
 ):
     query = (
         get_displayed_menu_query()
@@ -41,12 +56,8 @@ async def find_displayed_menus_with_offset(
         .order_by(*MENU_ORDER_BY)
     )
 
-    return await apply_offset_pagination(
-        db=db,
-        query=query,
-        offset=filter_data.offset,
-        limit=filter_data.limit,
-    )
+    result = await db.execute(query)
+    return result.scalars().all()
 
 
 async def find_menu_by_id_with_prices(

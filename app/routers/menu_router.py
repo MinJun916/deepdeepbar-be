@@ -9,14 +9,12 @@ from app.dependencies.auth_dependency import require_admin
 from app.models.user_model import User
 from app.schemas.menu_schema import (
     CreateMenuRequest,
-    MenuOffsetFilterData,
-    MenuOffsetResponse,
     MenuResponse,
     UpdateMenuRequest,
 )
 from app.services.menu_service import (
     create_menu,
-    get_displayed_menus_with_offset,
+    get_displayed_menus,
     soft_delete_menu,
     update_menu,
 )
@@ -24,12 +22,19 @@ from app.services.menu_service import (
 router = APIRouter(prefix="/menus", tags=["menus"])
 
 
-@router.get("/", response_model=MenuOffsetResponse)
-async def read_menus_with_offset(
+# @router.get("/", response_model=MenuOffsetResponse)
+# async def read_menus_with_offset(
+#     db: Annotated[AsyncSession, Depends(get_db)],
+#     filter_data: Annotated[MenuOffsetFilterData, Depends()],
+# ):
+#     return await get_displayed_menus_with_offset(db, filter_data)
+
+
+@router.get("/", response_model=list[MenuResponse])
+async def read_menus(
     db: Annotated[AsyncSession, Depends(get_db)],
-    filter_data: Annotated[MenuOffsetFilterData, Depends()],
 ):
-    return await get_displayed_menus_with_offset(db, filter_data)
+    return await get_displayed_menus(db)
 
 
 @router.post("/", response_model=MenuResponse)

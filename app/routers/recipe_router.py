@@ -10,7 +10,6 @@ from app.models.user_model import User
 from app.schemas.recipe_schema import (
     CreateRecipeRequest,
     RecipeFilterData,
-    RecipeListResponse,
     RecipeResponse,
     UpdateRecipeRequest,
 )
@@ -24,7 +23,7 @@ from app.services.recipe_service import (
 router = APIRouter(prefix="/recipes", tags=["recipes"])
 
 
-@router.get("/", response_model=RecipeListResponse)
+@router.get("/", response_model=list[RecipeResponse])
 async def read_recipes(
     current_user: Annotated[User, Depends(require_staff_or_admin)],
     db: Annotated[AsyncSession, Depends(get_db)],

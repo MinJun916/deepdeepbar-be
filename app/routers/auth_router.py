@@ -9,10 +9,11 @@ from app.models.user_model import User
 from app.schemas.auth_schema import (
     LoginRequest,
     LoginResponse,
+    LogoutResponse,
     RefreshResponse,
 )
 from app.schemas.user_schema import UserResponse
-from app.services.auth_service import create_admin, login, refresh_access_token
+from app.services.auth_service import create_admin, login, logout, refresh_access_token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -66,3 +67,21 @@ async def add_admin(
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     return await create_admin(db)
+
+
+@router.post("/logout", response_model=LogoutResponse)
+async def logout_user(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    response: Response,
+    refresh_token: Annotated[str | None, Cookie()] = None,
+):
+    result = await logout(db=db, refresh_token=refresh_token)
+
+    response.delete_cookie(
+        key="refresh_token",
+        httponly=True,
+        secure=False,
+        samesite="lax",
+    )
+
+    return result

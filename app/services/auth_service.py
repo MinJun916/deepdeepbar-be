@@ -13,6 +13,7 @@ from app.crud.auth_crud import (
     find_refresh_token_by_token_hash,
     find_user_by_email,
     find_user_by_id,
+    revoke_refresh_token_crud,
 )
 from app.models.refresh_token_model import RefreshToken
 from app.models.user_model import UserRole
@@ -125,3 +126,15 @@ async def create_admin(
         )
 
     return await create_admin_crud(db, admin_data)
+
+
+async def logout(
+    db: AsyncSession,
+    refresh_token: str | None,
+):
+    if refresh_token is not None:
+        await revoke_refresh_token_crud(db, hash_token(refresh_token))
+
+    return {
+        "message": "로그아웃 되었습니다.",
+    }

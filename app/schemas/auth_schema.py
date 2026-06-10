@@ -28,3 +28,7 @@ class CreateAdminRequest(BaseModel):
     name: str
     role: UserRole = UserRole.admin
     is_active: bool = True
+
+
+class LogoutResponse(BaseModel):
+    message: str

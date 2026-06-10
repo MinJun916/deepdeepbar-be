@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -49,3 +50,21 @@ async def create_admin_crud(
     await db.refresh(admin)
 
     return admin
+
+
+async def revoke_refresh_token_crud(
+    db: AsyncSession,
+    token_hash: str,
+) -> RefreshToken | None:
+    refresh_token = await find_refresh_token_by_token_hash(db, token_hash)
+
+    if refresh_token is None:
+        return None
+
+    refresh_token.revoked_at = datetime.now(timezone.utc)
+
+    db.add(refresh_token)
+    await db.commit()
+    await db.refresh(refresh_token)
+
+    return refresh_token

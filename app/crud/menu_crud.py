@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import desc, select
+from sqlalchemy import desc, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -12,6 +12,7 @@ from app.models.menu_model import Menu
 from app.models.menu_price_model import MenuPrice
 from app.schemas.menu_schema import (
     CreateMenuRequest,
+    MenuFilterData,
     UpdateMenuRequest,
 )
 
@@ -49,12 +50,22 @@ async def find_menu_by_id_crud(
 
 async def find_displayed_menus_crud(
     db: AsyncSession,
+    filter_data: MenuFilterData,
 ):
     query = (
         get_displayed_menu_query()
         .options(selectinload(Menu.prices))
         .order_by(*MENU_ORDER_BY)
     )
+
+    if filter_data.keyword is not None:
+        keyword = f"%{filter_data.keyword}%"
+        query = query.where(
+            or_(
+                Menu.name.ilike(keyword),
+                Menu.name_en.ilike(keyword),
+            )
+        )
 
     result = await db.execute(query)
     return result.scalars().all()

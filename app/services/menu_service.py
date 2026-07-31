@@ -10,6 +10,7 @@ from app.crud.menu_crud import (
 )
 from app.schemas.menu_schema import (
     CreateMenuRequest,
+    MenuFilterData,
     UpdateMenuRequest,
 )
 
@@ -22,8 +23,9 @@ from app.schemas.menu_schema import (
 
 async def get_displayed_menus(
     db: AsyncSession,
+    filter_data: MenuFilterData,
 ):
-    return await find_displayed_menus_crud(db)
+    return await find_displayed_menus_crud(db, filter_data)
 
 
 async def create_menu(

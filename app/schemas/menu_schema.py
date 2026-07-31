@@ -33,6 +33,10 @@ class MenuResponseForRecipe(BaseModel):
     name_en: str
 
 
+class MenuFilterData(BaseModel):
+    keyword: str | None = None
+
+
 class MenuOffsetFilterData(BaseModel):
     offset: int = Query(default=0, ge=0)
     limit: int = Query(default=20, ge=1, le=100)

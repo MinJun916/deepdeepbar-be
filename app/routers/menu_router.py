@@ -9,6 +9,7 @@ from app.dependencies.auth_dependency import require_admin
 from app.models.user_model import User
 from app.schemas.menu_schema import (
     CreateMenuRequest,
+    MenuFilterData,
     MenuResponse,
     UpdateMenuRequest,
 )
@@ -33,8 +34,9 @@ router = APIRouter(prefix="/menus", tags=["menus"])
 @router.get("/", response_model=list[MenuResponse])
 async def read_menus(
     db: Annotated[AsyncSession, Depends(get_db)],
+    filter_data: Annotated[MenuFilterData, Depends()],
 ):
-    return await get_displayed_menus(db)
+    return await get_displayed_menus(db, filter_data)
 
 
 @router.post("/", response_model=MenuResponse)

@@ -7,6 +7,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.connection import get_db
 from app.dependencies.auth_dependency import require_admin
 from app.models.user_model import User
+from app.schemas.discord_order_notification_schema import (
+    DiscordOrderNotificationResponse,
+)
 from app.schemas.order_schema import (
     ActiveTableOrdersResponse,
     CreateOrderRequest,
@@ -14,6 +17,10 @@ from app.schemas.order_schema import (
     OrderPaginatedResponse,
     OrderResponse,
     UpdateOrderPosRegistrationRequest,
+)
+from app.services.discord_order_notification_service import (
+    get_discord_order_notification,
+    retry_discord_order_notification,
 )
 from app.services.order_service import (
     create_order,
@@ -126,6 +133,36 @@ async def patch_order_pos_registration(
         order_id,
         pos_registration_data.is_pos_registered,
     )
+
+
+@router.get(
+    "/{order_id}/discord-notification",
+    response_model=DiscordOrderNotificationResponse,
+    summary="Discord 주문 알림 상태 조회",
+)
+async def read_discord_order_notification(
+    order_id: uuid.UUID,
+    current_user: authorized_admin,
+    db: db,
+):
+    return await get_discord_order_notification(db, order_id)
+
+
+@router.post(
+    "/{order_id}/discord-notification/retry",
+    response_model=DiscordOrderNotificationResponse,
+    summary="Discord 주문 알림 재전송",
+    description=(
+        "실패하거나 장시간 전송 중인 주문 알림을 다시 전송합니다. 이미 전송된 "
+        "알림과 현재 처리 중인 알림은 중복 전송하지 않습니다."
+    ),
+)
+async def retry_order_discord_notification(
+    order_id: uuid.UUID,
+    current_user: authorized_admin,
+    db: db,
+):
+    return await retry_discord_order_notification(db, order_id)
 
 
 @router.get("/{order_id}", response_model=OrderResponse)

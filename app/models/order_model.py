@@ -22,6 +22,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base_model import BaseModel
 
 if TYPE_CHECKING:
+    from app.models.discord_order_notification_model import DiscordOrderNotification
     from app.models.order_item_model import OrderItem
     from app.models.table_session_model import TableSession
 
@@ -84,4 +85,9 @@ class Order(BaseModel):
         back_populates="order",
         order_by="OrderItem.display_order",
         cascade="all, delete-orphan",
+    )
+    discord_notification: Mapped["DiscordOrderNotification | None"] = relationship(
+        back_populates="order",
+        cascade="all, delete-orphan",
+        uselist=False,
     )

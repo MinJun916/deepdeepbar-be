@@ -14,6 +14,7 @@ from app.constants.status_code import (
 from app.core.exceptions import AppError
 from app.crud.common.pagination_crud import apply_pagination
 from app.models.base_model import get_utc_now
+from app.models.discord_order_notification_model import DiscordOrderNotification
 from app.models.menu_model import Menu
 from app.models.menu_price_model import MenuPrice
 from app.models.order_item_model import OrderItem
@@ -228,6 +229,8 @@ async def create_order_crud(
     try:
         db.add(order)
         await db.flush()
+
+        db.add(DiscordOrderNotification(order_id=order.id))
 
         order_items = []
 

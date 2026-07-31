@@ -25,6 +25,9 @@ from app.schemas.order_schema import (
     CreateOrderRequest,
     OrderFilterData,
 )
+from app.services.discord_order_notification_service import (
+    try_dispatch_discord_order_notification,
+)
 from app.services.store_setting_service import ensure_ordering_enabled
 
 
@@ -73,6 +76,7 @@ async def create_order(
                 message=("동일한 Idempotency-Key가 다른 주문에 사용되었습니다."),
             )
 
+        await try_dispatch_discord_order_notification(db, existing_order.id)
         return existing_order
 
     await ensure_ordering_enabled(db)
@@ -95,7 +99,7 @@ async def create_order(
             message="올바르지 않은 메뉴 가격이 포함되어 있습니다.",
         )
 
-    return await create_order_crud(
+    created_order = await create_order_crud(
         db,
         table_session,
         idempotency_key,
@@ -103,6 +107,8 @@ async def create_order(
         order_data.items,
         menu_prices,
     )
+    await try_dispatch_discord_order_notification(db, created_order.id)
+    return created_order
 
 
 async def get_current_table_orders(

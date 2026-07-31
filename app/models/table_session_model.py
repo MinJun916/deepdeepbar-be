@@ -2,11 +2,15 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import UUID, DateTime, ForeignKey, Index, Integer, String, text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base_model import BaseModel
+
+if TYPE_CHECKING:
+    from app.models.order_model import Order
 
 
 class TableSession(BaseModel):
@@ -36,6 +40,8 @@ class TableSession(BaseModel):
         ForeignKey("users.id"),
         nullable=True,
     )
+
+    orders: Mapped[list["Order"]] = relationship(back_populates="table_session")
 
     @property
     def is_active(self) -> bool:

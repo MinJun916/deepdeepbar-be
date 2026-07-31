@@ -120,7 +120,7 @@ async def update_menu_crud(
     menu_data: UpdateMenuRequest,
 ):
     try:
-        menu = await find_menu_by_id_crud(db, menu_id)
+        menu = await find_menu_by_id_with_prices(db, menu_id)
 
         if menu is None:
             raise AppError(status_code=NOT_FOUND, message="메뉴를 찾을 수 없습니다.")

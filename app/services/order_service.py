@@ -16,6 +16,7 @@ from app.crud.order_crud import (
     find_order_by_idempotency_key_crud,
     find_order_history_crud,
     find_orders_by_table_session_crud,
+    update_order_pos_registration_crud,
 )
 from app.crud.table_session_crud import find_active_table_session_by_token_hash_crud
 from app.models.order_model import Order
@@ -138,6 +139,18 @@ async def get_active_table_orders(
         )
         for table_session in table_sessions
     ]
+
+
+async def update_order_pos_registration(
+    db: AsyncSession,
+    order_id: uuid.UUID,
+    is_pos_registered: bool,
+) -> Order:
+    return await update_order_pos_registration_crud(
+        db,
+        order_id,
+        is_pos_registered,
+    )
 
 
 async def get_order(

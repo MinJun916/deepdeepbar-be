@@ -13,6 +13,7 @@ from app.schemas.order_schema import (
     OrderFilterData,
     OrderPaginatedResponse,
     OrderResponse,
+    UpdateOrderPosRegistrationRequest,
 )
 from app.services.order_service import (
     create_order,
@@ -20,6 +21,7 @@ from app.services.order_service import (
     get_current_table_orders,
     get_order,
     get_order_history,
+    update_order_pos_registration,
 )
 
 router = APIRouter(prefix="/orders", tags=["orders"])
@@ -101,6 +103,29 @@ async def read_active_table_orders(
     db: db,
 ):
     return await get_active_table_orders(db)
+
+
+@router.patch(
+    "/{order_id}/pos-registration",
+    response_model=OrderResponse,
+    summary="주문 포스 등록 상태 변경",
+    description=(
+        "관리자가 주문의 포스 등록 여부를 변경합니다. 등록 시각은 최초 등록 시 "
+        "기록되고, 등록 취소 시 초기화됩니다. 동일 상태의 반복 요청은 기존 "
+        "등록 시각을 유지합니다."
+    ),
+)
+async def patch_order_pos_registration(
+    order_id: uuid.UUID,
+    pos_registration_data: UpdateOrderPosRegistrationRequest,
+    current_user: authorized_admin,
+    db: db,
+):
+    return await update_order_pos_registration(
+        db,
+        order_id,
+        pos_registration_data.is_pos_registered,
+    )
 
 
 @router.get("/{order_id}", response_model=OrderResponse)

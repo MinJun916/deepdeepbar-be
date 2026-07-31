@@ -5,9 +5,15 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import contains_eager, selectinload, with_loader_criteria
 
-from app.constants.status_code import CONFLICT, INTERNAL_SERVER_ERROR, UNAUTHORIZED
+from app.constants.status_code import (
+    CONFLICT,
+    INTERNAL_SERVER_ERROR,
+    NOT_FOUND,
+    UNAUTHORIZED,
+)
 from app.core.exceptions import AppError
 from app.crud.common.pagination_crud import apply_pagination
+from app.models.base_model import get_utc_now
 from app.models.menu_model import Menu
 from app.models.menu_price_model import MenuPrice
 from app.models.order_item_model import OrderItem
@@ -134,6 +140,46 @@ async def find_active_table_sessions_with_orders_crud(
         .order_by(TableSession.table_number.asc())
     )
     return list(result.scalars().all())
+
+
+async def update_order_pos_registration_crud(
+    db: AsyncSession,
+    order_id: uuid.UUID,
+    is_pos_registered: bool,
+) -> Order:
+    result = await db.execute(
+        select(Order)
+        .options(selectinload(Order.items))
+        .where(
+            Order.id == order_id,
+            Order.deleted_at.is_(None),
+        )
+        .with_for_update()
+    )
+    order = result.scalar_one_or_none()
+
+    if order is None:
+        raise AppError(
+            status_code=NOT_FOUND,
+            message="주문을 찾을 수 없습니다.",
+        )
+
+    if order.is_pos_registered == is_pos_registered:
+        await db.commit()
+        return order
+
+    changed_at = get_utc_now()
+    order.is_pos_registered = is_pos_registered
+    order.pos_registered_at = changed_at if is_pos_registered else None
+    order.updated_at = changed_at
+
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
+
+    return order
 
 
 async def find_locked_orderable_menu_prices_crud(

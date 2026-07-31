@@ -26,6 +26,10 @@ class CreateOrderRequest(BaseModel):
         return self
 
 
+class UpdateOrderPosRegistrationRequest(BaseModel):
+    is_pos_registered: bool
+
+
 class OrderItemResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

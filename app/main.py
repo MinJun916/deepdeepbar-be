@@ -6,6 +6,7 @@ from app.core.exceptions import AppError, app_error_handler, unhandled_exception
 from app.middlewares.logging_middleware import LoggingMiddleware
 from app.routers.admin_user_router import router as admin_user_router
 from app.routers.auth_router import router as auth_router
+from app.routers.discord_interaction_router import router as discord_interaction_router
 from app.routers.menu_router import router as menu_router
 from app.routers.order_router import router as order_router
 from app.routers.recipe_router import router as recipe_router
@@ -41,6 +42,10 @@ tags_metadata = [
         "name": "store-settings",
         "description": "매장 주문 모드 조회 및 관리 API",
     },
+    {
+        "name": "discord",
+        "description": "Discord 주문 버튼 Interaction API",
+    },
 ]
 
 app = FastAPI(
@@ -72,6 +77,7 @@ app.include_router(admin_user_router)
 app.include_router(table_session_router)
 app.include_router(order_router)
 app.include_router(store_setting_router)
+app.include_router(discord_interaction_router)
 
 app.add_exception_handler(AppError, app_error_handler)
 app.add_exception_handler(Exception, unhandled_exception_handler)

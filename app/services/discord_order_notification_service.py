@@ -2,9 +2,10 @@ import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.clients.discord_webhook_client import (
-    DiscordWebhookError,
-    send_order_webhook,
+from app.clients.discord_bot_client import (
+    DiscordBotError,
+    edit_order_discord_message,
+    send_order_discord_message,
 )
 from app.constants.status_code import BAD_GATEWAY, NOT_FOUND
 from app.core.exceptions import AppError
@@ -16,6 +17,7 @@ from app.crud.discord_order_notification_crud import (
 )
 from app.crud.order_crud import find_order_by_id_crud
 from app.models.discord_order_notification_model import DiscordOrderNotification
+from app.models.order_model import Order
 
 
 async def get_discord_order_notification(
@@ -47,8 +49,8 @@ async def dispatch_discord_order_notification(
         return notification
 
     try:
-        message_id = await send_order_webhook(order)
-    except DiscordWebhookError as error:
+        message_id = await send_order_discord_message(order)
+    except DiscordBotError as error:
         failed_notification = await complete_discord_order_notification_crud(
             db,
             notification.id,
@@ -105,4 +107,41 @@ async def try_dispatch_discord_order_notification(
         logger.exception(
             "discord_order_notification_unexpected_error",
             order_id=str(order_id),
+        )
+
+
+async def sync_discord_order_message(
+    db: AsyncSession,
+    order: Order,
+) -> None:
+    notification = await find_discord_order_notification_crud(db, order.id)
+
+    if not notification.discord_message_id:
+        return
+
+    await edit_order_discord_message(notification.discord_message_id, order)
+    logger.info(
+        "discord_order_message_synced",
+        order_id=str(order.id),
+    )
+
+
+async def try_sync_discord_order_message(
+    db: AsyncSession,
+    order: Order,
+) -> None:
+    try:
+        await sync_discord_order_message(db, order)
+    except AppError as error:
+        if error.status_code == NOT_FOUND:
+            return
+
+        logger.exception(
+            "discord_order_message_sync_failed",
+            order_id=str(order.id),
+        )
+    except Exception:
+        logger.exception(
+            "discord_order_message_sync_failed",
+            order_id=str(order.id),
         )

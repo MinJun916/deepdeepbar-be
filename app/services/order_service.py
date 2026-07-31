@@ -27,6 +27,7 @@ from app.schemas.order_schema import (
 )
 from app.services.discord_order_notification_service import (
     try_dispatch_discord_order_notification,
+    try_sync_discord_order_message,
 )
 from app.services.store_setting_service import ensure_ordering_enabled
 
@@ -154,12 +155,19 @@ async def update_order_pos_registration(
     db: AsyncSession,
     order_id: uuid.UUID,
     is_pos_registered: bool,
+    *,
+    sync_discord_message: bool = True,
 ) -> Order:
-    return await update_order_pos_registration_crud(
+    order = await update_order_pos_registration_crud(
         db,
         order_id,
         is_pos_registered,
     )
+
+    if sync_discord_message:
+        await try_sync_discord_order_message(db, order)
+
+    return order
 
 
 async def get_order(

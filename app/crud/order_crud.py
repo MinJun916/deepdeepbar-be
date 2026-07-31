@@ -3,7 +3,7 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import contains_eager, selectinload
+from sqlalchemy.orm import contains_eager, selectinload, with_loader_criteria
 
 from app.constants.status_code import CONFLICT, INTERNAL_SERVER_ERROR, UNAUTHORIZED
 from app.core.exceptions import AppError
@@ -81,23 +81,26 @@ async def find_orders_by_table_session_crud(
     return list(result.scalars().all())
 
 
-async def find_orders_crud(
+async def find_order_history_crud(
     db: AsyncSession,
     filter_data: OrderFilterData,
 ):
     query = (
         select(Order)
+        .join(Order.table_session)
         .options(selectinload(Order.items))
-        .where(Order.deleted_at.is_(None))
+        .where(
+            Order.deleted_at.is_(None),
+            TableSession.deleted_at.is_(None),
+            TableSession.checked_out_at.is_not(None),
+        )
     )
 
     if filter_data.table_number is not None:
         query = query.where(Order.table_number == filter_data.table_number)
 
     if filter_data.is_pos_registered is not None:
-        query = query.where(
-            Order.is_pos_registered.is_(filter_data.is_pos_registered)
-        )
+        query = query.where(Order.is_pos_registered.is_(filter_data.is_pos_registered))
 
     if filter_data.created_from is not None:
         query = query.where(Order.created_at >= filter_data.created_from)
@@ -113,6 +116,24 @@ async def find_orders_crud(
         filter_data.page,
         filter_data.limit,
     )
+
+
+async def find_active_table_sessions_with_orders_crud(
+    db: AsyncSession,
+) -> list[TableSession]:
+    result = await db.execute(
+        select(TableSession)
+        .options(
+            selectinload(TableSession.orders).selectinload(Order.items),
+            with_loader_criteria(Order, Order.deleted_at.is_(None)),
+        )
+        .where(
+            TableSession.checked_out_at.is_(None),
+            TableSession.deleted_at.is_(None),
+        )
+        .order_by(TableSession.table_number.asc())
+    )
+    return list(result.scalars().all())
 
 
 async def find_locked_orderable_menu_prices_crud(

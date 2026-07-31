@@ -8,6 +8,7 @@ from app.database.connection import get_db
 from app.dependencies.auth_dependency import require_admin
 from app.models.user_model import User
 from app.schemas.order_schema import (
+    ActiveTableOrdersResponse,
     CreateOrderRequest,
     OrderFilterData,
     OrderPaginatedResponse,
@@ -15,9 +16,10 @@ from app.schemas.order_schema import (
 )
 from app.services.order_service import (
     create_order,
+    get_active_table_orders,
     get_current_table_orders,
     get_order,
-    get_orders,
+    get_order_history,
 )
 
 router = APIRouter(prefix="/orders", tags=["orders"])
@@ -68,13 +70,37 @@ async def read_current_table_orders(
     return await get_current_table_orders(db, session_token)
 
 
-@router.get("/", response_model=OrderPaginatedResponse)
-async def read_orders(
+@router.get(
+    "/history",
+    response_model=OrderPaginatedResponse,
+    summary="체크아웃 완료 주문 이력 조회",
+    description=(
+        "조회 시점에 체크아웃이 완료된 테이블 세션의 주문만 최신 주문순으로 조회합니다."
+    ),
+)
+async def read_order_history(
     current_user: authorized_admin,
     db: db,
     filter_data: Annotated[OrderFilterData, Depends()],
 ):
-    return await get_orders(db, filter_data)
+    return await get_order_history(db, filter_data)
+
+
+@router.get(
+    "/active-tables",
+    response_model=list[ActiveTableOrdersResponse],
+    summary="이용 중인 테이블별 주문 현황 조회",
+    description=(
+        "조회 시점에 체크아웃되지 않은 테이블을 테이블별로 구분하여 "
+        "주문 목록과 누적 정보를 조회합니다. 주문이 없는 이용 중 테이블도 "
+        "포함됩니다."
+    ),
+)
+async def read_active_table_orders(
+    current_user: authorized_admin,
+    db: db,
+):
+    return await get_active_table_orders(db)
 
 
 @router.get("/{order_id}", response_model=OrderResponse)

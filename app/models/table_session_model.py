@@ -41,7 +41,10 @@ class TableSession(BaseModel):
         nullable=True,
     )
 
-    orders: Mapped[list["Order"]] = relationship(back_populates="table_session")
+    orders: Mapped[list["Order"]] = relationship(
+        back_populates="table_session",
+        order_by="Order.created_at",
+    )
 
     @property
     def is_active(self) -> bool:

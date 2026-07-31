@@ -9,16 +9,21 @@ from app.core.exceptions import AppError
 from app.core.security import hash_token
 from app.crud.order_crud import (
     create_order_crud,
+    find_active_table_sessions_with_orders_crud,
     find_locked_active_table_session_crud,
     find_locked_orderable_menu_prices_crud,
     find_order_by_id_crud,
     find_order_by_idempotency_key_crud,
+    find_order_history_crud,
     find_orders_by_table_session_crud,
-    find_orders_crud,
 )
 from app.crud.table_session_crud import find_active_table_session_by_token_hash_crud
 from app.models.order_model import Order
-from app.schemas.order_schema import CreateOrderRequest, OrderFilterData
+from app.schemas.order_schema import (
+    ActiveTableOrdersResponse,
+    CreateOrderRequest,
+    OrderFilterData,
+)
 
 
 def create_order_request_hash(order_data: CreateOrderRequest) -> str:
@@ -63,9 +68,7 @@ async def create_order(
         if existing_order.request_hash != request_hash:
             raise AppError(
                 status_code=CONFLICT,
-                message=(
-                    "동일한 Idempotency-Key가 다른 주문에 사용되었습니다."
-                ),
+                message=("동일한 Idempotency-Key가 다른 주문에 사용되었습니다."),
             )
 
         return existing_order
@@ -79,9 +82,7 @@ async def create_order(
     if len(menu_prices) != len(menu_price_ids):
         raise AppError(
             status_code=BAD_REQUEST,
-            message=(
-                "주문할 수 없는 메뉴 또는 가격이 포함되어 있습니다."
-            ),
+            message=("주문할 수 없는 메뉴 또는 가격이 포함되어 있습니다."),
         )
 
     if any(menu_price.price < 0 for menu_price in menu_prices.values()):
@@ -111,11 +112,32 @@ async def get_current_table_orders(
     return await find_orders_by_table_session_crud(db, table_session.id)
 
 
-async def get_orders(
+async def get_order_history(
     db: AsyncSession,
     filter_data: OrderFilterData,
 ):
-    return await find_orders_crud(db, filter_data)
+    return await find_order_history_crud(db, filter_data)
+
+
+async def get_active_table_orders(
+    db: AsyncSession,
+) -> list[ActiveTableOrdersResponse]:
+    table_sessions = await find_active_table_sessions_with_orders_crud(db)
+
+    return [
+        ActiveTableOrdersResponse(
+            table_session_id=table_session.id,
+            table_number=table_session.table_number,
+            entered_at=table_session.created_at,
+            order_count=len(table_session.orders),
+            total_amount=sum(order.total_amount for order in table_session.orders),
+            unregistered_order_count=sum(
+                not order.is_pos_registered for order in table_session.orders
+            ),
+            orders=table_session.orders,
+        )
+        for table_session in table_sessions
+    ]
 
 
 async def get_order(

@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 
 from fastapi import Query
-from pydantic import AwareDatetime, BaseModel, Field, model_validator
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, model_validator
 
 from app.models.menu_price_model import PriceTypeEnum
 from app.schemas.common_schema import PaginatedResponse
@@ -21,14 +21,14 @@ class CreateOrderRequest(BaseModel):
         menu_price_ids = [item.menu_price_id for item in self.items]
 
         if len(menu_price_ids) != len(set(menu_price_ids)):
-            raise ValueError(
-                "동일한 메뉴 가격을 중복해서 주문할 수 없습니다."
-            )
+            raise ValueError("동일한 메뉴 가격을 중복해서 주문할 수 없습니다.")
 
         return self
 
 
 class OrderItemResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: uuid.UUID
     menu_id: uuid.UUID
     menu_price_id: uuid.UUID | None
@@ -42,6 +42,8 @@ class OrderItemResponse(BaseModel):
 
 
 class OrderResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: uuid.UUID
     table_session_id: uuid.UUID
     table_number: int
@@ -51,6 +53,16 @@ class OrderResponse(BaseModel):
     pos_registered_at: datetime | None
     created_at: datetime
     items: list[OrderItemResponse]
+
+
+class ActiveTableOrdersResponse(BaseModel):
+    table_session_id: uuid.UUID
+    table_number: int
+    entered_at: datetime
+    order_count: int
+    total_amount: int
+    unregistered_order_count: int
+    orders: list[OrderResponse]
 
 
 class OrderFilterData(BaseModel):

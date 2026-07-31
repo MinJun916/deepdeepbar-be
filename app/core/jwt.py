@@ -13,6 +13,7 @@ def create_access_token(user_id: uuid.UUID, role: str):
 
     payload = {
         "sub": str(user_id),
+        "jti": str(uuid.uuid4()),
         "role": role,
         "type": "access",
         "exp": expire,
@@ -30,7 +31,12 @@ def create_refresh_token(user_id: uuid.UUID):
         days=settings.refresh_token_expire_days,
     )
 
-    payload = {"sub": str(user_id), "type": "refresh", "exp": expire}
+    payload = {
+        "sub": str(user_id),
+        "jti": str(uuid.uuid4()),
+        "type": "refresh",
+        "exp": expire,
+    }
 
     return jwt.encode(
         payload,

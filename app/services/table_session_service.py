@@ -12,6 +12,10 @@ from app.crud.table_session_crud import (
 )
 from app.models.base_model import get_utc_now
 from app.models.table_session_model import TableSession
+from app.services.discord_table_session_notification_service import (
+    try_dispatch_discord_table_session_notification,
+    try_sync_discord_table_session_message,
+)
 
 
 async def enter_table(
@@ -24,6 +28,7 @@ async def enter_table(
         table_number,
         hash_token(session_token),
     )
+    await try_dispatch_discord_table_session_notification(db, table_session.id)
 
     return {
         "id": table_session.id,
@@ -31,6 +36,9 @@ async def enter_table(
         "created_at": table_session.created_at,
         "checked_out_at": table_session.checked_out_at,
         "checked_out_by_user_id": table_session.checked_out_by_user_id,
+        "checked_out_by_discord_user_id": (
+            table_session.checked_out_by_discord_user_id
+        ),
         "is_active": table_session.is_active,
         "session_token": session_token,
     }
@@ -56,11 +64,20 @@ async def get_table_sessions(
 async def checkout_table_session(
     db: AsyncSession,
     table_session_id: uuid.UUID,
-    checked_out_by_user_id: uuid.UUID,
+    checked_out_by_user_id: uuid.UUID | None = None,
+    checked_out_by_discord_user_id: str | None = None,
+    *,
+    sync_discord_message: bool = True,
 ) -> TableSession:
-    return await checkout_table_session_crud(
+    table_session = await checkout_table_session_crud(
         db,
         table_session_id,
         checked_out_by_user_id,
+        checked_out_by_discord_user_id,
         get_utc_now(),
     )
+
+    if sync_discord_message:
+        await try_sync_discord_table_session_message(db, table_session)
+
+    return table_session

@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import UUID, DateTime, ForeignKey, String
+from sqlalchemy import UUID, DateTime, ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base_model import BaseModel
@@ -15,6 +15,13 @@ if TYPE_CHECKING:
 
 class RefreshToken(BaseModel):
     __tablename__ = "refresh_tokens"
+
+    __table_args__ = (
+        Index(
+            "ix_refresh_tokens_token_hash",
+            "token_hash",
+        ),
+    )
 
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),

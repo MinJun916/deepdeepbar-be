@@ -1,3 +1,4 @@
+import uuid
 from typing import Annotated
 
 import jwt
@@ -28,13 +29,15 @@ async def get_current_user(
     if payload.get("type") != "access":
         raise AppError(status_code=UNAUTHORIZED, message="access token이 아닙니다.")
 
-    user_id = payload.get("sub")
+    user_id_value = payload.get("sub")
 
-    if user_id is None:
+    try:
+        user_id = uuid.UUID(user_id_value)
+    except (TypeError, ValueError):
         raise AppError(
             status_code=UNAUTHORIZED,
             message="토큰 정보가 올바르지 않습니다.",
-        )
+        ) from None
 
     result = await db.execute(select(User).where(User.id == user_id))
 

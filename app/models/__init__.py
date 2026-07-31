@@ -1,4 +1,7 @@
 from app.models.discord_order_notification_model import DiscordOrderNotification
+from app.models.discord_table_session_notification_model import (
+    DiscordTableSessionNotification,
+)
 from app.models.glass_type_model import GlassType
 from app.models.menu_model import Menu
 from app.models.menu_price_model import MenuPrice
@@ -14,6 +17,7 @@ from app.models.user_model import User
 __all__ = [
     "Menu",
     "DiscordOrderNotification",
+    "DiscordTableSessionNotification",
     "GlassType",
     "Recipe",
     "RecipeStep",

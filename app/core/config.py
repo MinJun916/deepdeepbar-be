@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     discord_bot_token: SecretStr | None = None
     discord_guild_id: str | None = None
     discord_order_channel_id: str | None = None
+    discord_table_channel_id: str | None = None
 
     @property
     def discord_timeout_seconds(self) -> float:

@@ -14,6 +14,7 @@ class TableSessionResponse(BaseModel):
     created_at: datetime
     checked_out_at: datetime | None
     checked_out_by_user_id: uuid.UUID | None
+    checked_out_by_discord_user_id: str | None
     is_active: bool
 
 

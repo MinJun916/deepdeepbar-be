@@ -10,6 +10,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base_model import BaseModel
 
 if TYPE_CHECKING:
+    from app.models.discord_table_session_notification_model import (
+        DiscordTableSessionNotification,
+    )
     from app.models.order_model import Order
 
 
@@ -40,10 +43,21 @@ class TableSession(BaseModel):
         ForeignKey("users.id"),
         nullable=True,
     )
+    checked_out_by_discord_user_id: Mapped[str | None] = mapped_column(
+        String(30),
+        nullable=True,
+    )
 
     orders: Mapped[list["Order"]] = relationship(
         back_populates="table_session",
         order_by="Order.created_at",
+    )
+    discord_notification: Mapped["DiscordTableSessionNotification | None"] = (
+        relationship(
+            back_populates="table_session",
+            cascade="all, delete-orphan",
+            uselist=False,
+        )
     )
 
     @property

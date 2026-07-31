@@ -25,6 +25,7 @@ from app.schemas.order_schema import (
     CreateOrderRequest,
     OrderFilterData,
 )
+from app.services.store_setting_service import ensure_ordering_enabled
 
 
 def create_order_request_hash(order_data: CreateOrderRequest) -> str:
@@ -73,6 +74,8 @@ async def create_order(
             )
 
         return existing_order
+
+    await ensure_ordering_enabled(db)
 
     menu_price_ids = [item.menu_price_id for item in order_data.items]
     menu_prices = await find_locked_orderable_menu_prices_crud(

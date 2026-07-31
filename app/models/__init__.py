@@ -6,6 +6,7 @@ from app.models.order_model import Order
 from app.models.recipe_model import Recipe
 from app.models.recipe_step_model import RecipeStep
 from app.models.refresh_token_model import RefreshToken
+from app.models.store_setting_model import StoreSetting
 from app.models.table_session_model import TableSession
 from app.models.user_model import User
 
@@ -19,5 +20,6 @@ __all__ = [
     "OrderItem",
     "User",
     "RefreshToken",
+    "StoreSetting",
     "TableSession",
 ]

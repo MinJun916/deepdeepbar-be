@@ -9,6 +9,11 @@ from app.clients.discord_bot_client import (
     build_order_message_payload,
     build_table_session_message_payload,
 )
+from app.constants.discord_command import (
+    ORDER_MODE_COMMAND_NAME,
+    ORDER_MODE_OPTION_NAME,
+    ORDER_MODE_VALUE_TO_ENABLED,
+)
 from app.constants.status_code import (
     BAD_REQUEST,
     INTERNAL_SERVER_ERROR,
@@ -23,9 +28,11 @@ from app.services.discord_table_session_notification_service import (
     get_discord_table_session_notification,
 )
 from app.services.order_service import update_order_pos_registration
+from app.services.store_setting_service import update_order_mode
 from app.services.table_session_service import checkout_table_session
 
 PING = 1
+APPLICATION_COMMAND = 2
 MESSAGE_COMPONENT = 3
 PONG = 1
 CHANNEL_MESSAGE_WITH_SOURCE = 4
@@ -59,7 +66,10 @@ def validate_interaction_context(payload: dict) -> None:
         )
 
 
-def validate_component_context(payload: dict, expected_channel_id: str | None) -> None:
+def validate_guild_channel_context(
+    payload: dict,
+    expected_channel_id: str | None,
+) -> None:
     guild_id = settings.discord_guild_id
 
     if not guild_id or not expected_channel_id:
@@ -146,7 +156,7 @@ async def handle_order_component(
     payload: dict,
     custom_id: str,
 ) -> dict:
-    validate_component_context(payload, settings.discord_order_channel_id)
+    validate_guild_channel_context(payload, settings.discord_order_channel_id)
     order_id, is_registered = parse_pos_registration_action(custom_id)
     notification = await get_discord_order_notification(db, order_id)
     message_id = payload.get("message", {}).get("id")
@@ -171,7 +181,7 @@ async def handle_table_checkout_component(
     payload: dict,
     custom_id: str,
 ) -> dict:
-    validate_component_context(payload, settings.discord_table_channel_id)
+    validate_guild_channel_context(payload, settings.discord_table_channel_id)
     table_session_id = parse_table_checkout_action(custom_id)
     notification = await get_discord_table_session_notification(
         db,
@@ -197,6 +207,49 @@ async def handle_table_checkout_component(
     }
 
 
+def parse_order_mode(payload: dict) -> bool:
+    options = payload.get("data", {}).get("options", [])
+
+    if not isinstance(options, list):
+        options = []
+
+    selected_value = next(
+        (
+            option.get("value")
+            for option in options
+            if isinstance(option, dict) and option.get("name") == ORDER_MODE_OPTION_NAME
+        ),
+        None,
+    )
+
+    if selected_value not in ORDER_MODE_VALUE_TO_ENABLED:
+        raise AppError(
+            status_code=BAD_REQUEST,
+            message="주문 모드 선택값이 올바르지 않습니다.",
+        )
+
+    return ORDER_MODE_VALUE_TO_ENABLED[selected_value]
+
+
+async def handle_application_command(
+    db: AsyncSession,
+    payload: dict,
+) -> dict:
+    validate_guild_channel_context(payload, settings.discord_table_channel_id)
+
+    if payload.get("data", {}).get("name") != ORDER_MODE_COMMAND_NAME:
+        raise AppError(
+            status_code=BAD_REQUEST,
+            message="지원하지 않는 Discord 명령어입니다.",
+        )
+
+    is_order_enabled = parse_order_mode(payload)
+    await update_order_mode(db, is_order_enabled)
+    mode_name = "주문 가능" if is_order_enabled else "메뉴판 전용"
+
+    return ephemeral_response(f"✅ 주문 모드를 **{mode_name}**으로 변경했습니다.")
+
+
 async def handle_discord_interaction(
     db: AsyncSession,
     payload: dict,
@@ -207,10 +260,13 @@ async def handle_discord_interaction(
     if interaction_type == PING:
         return {"type": PONG}
 
-    if interaction_type != MESSAGE_COMPONENT:
-        return ephemeral_response("지원하지 않는 Discord 기능입니다.")
-
     try:
+        if interaction_type == APPLICATION_COMMAND:
+            return await handle_application_command(db, payload)
+
+        if interaction_type != MESSAGE_COMPONENT:
+            return ephemeral_response("지원하지 않는 Discord 기능입니다.")
+
         custom_id = payload.get("data", {}).get("custom_id", "")
         if custom_id.startswith(TABLE_CHECKOUT_BUTTON_PREFIX):
             return await handle_table_checkout_component(db, payload, custom_id)

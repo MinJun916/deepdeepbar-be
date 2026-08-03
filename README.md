@@ -31,6 +31,26 @@ docker compose exec deepdeepbar-be python -m scripts.create_admin
 `BOOTSTRAP_ADMIN_NAME` 환경변수를 일회성으로 전달한다. 계정 생성 후에는 bootstrap
 비밀번호를 서버 환경변수에 남겨두지 않는다.
 
+## Discord 주문 모드 명령어
+
+배포 환경에서 다음 명령을 한 번 실행하면 현재 서버에 `/주문모드` 길드 명령어가
+등록된다. 같은 이름의 명령어가 이미 있으면 최신 설정으로 갱신된다.
+
+```bash
+docker compose exec -T deepdeepbar-be python -m scripts.register_discord_commands
+```
+
+명령어는 `DISCORD_TABLE_CHANNEL_ID`로 지정한 채널에서만 실행할 수 있다. 별도의
+Discord 역할 제한은 없으므로 해당 채널을 볼 수 있는 모든 사용자가 아래 두 모드 중
+하나를 선택할 수 있다.
+
+- `주문 가능`: 고객이 메뉴를 주문할 수 있다.
+- `메뉴판 전용`: 메뉴 조회만 가능하고 주문 생성은 차단된다.
+
+다른 채널이나 DM에서 들어온 요청은 백엔드가 거부한다. 등록에는 기존
+`DISCORD_APPLICATION_ID`, `DISCORD_BOT_TOKEN`, `DISCORD_GUILD_ID` 환경변수를
+사용하므로 추가 환경변수는 필요하지 않다.
+
 [혼술바 딥딥(deepdeep)](https://deepdeepbar.vercel.app/) 메뉴·레시피·관리 기능을 제공하는 백엔드 API 서버입니다.
 
 Python + FastAPI 기반으로 구성되어 있습니다.

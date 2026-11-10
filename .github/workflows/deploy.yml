@@ -47,14 +47,14 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
           script: |
-            cd ${{ secrets.PROJECT_PATH }}
+            set -e
+            cd "${{ secrets.PROJECT_PATH }}"
 
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
 
             docker compose pull deepdeepbar-be
-            docker compose up -d --pull always --force-recreate deepdeepbar-be
-
-            docker compose exec -T deepdeepbar-be alembic upgrade head
+            docker compose run --rm --no-deps -T deepdeepbar-be alembic upgrade head
+            docker compose up -d --force-recreate deepdeepbar-be
 
             docker compose logs --tail=100 deepdeepbar-be
 

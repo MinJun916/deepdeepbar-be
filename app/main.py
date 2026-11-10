@@ -10,6 +10,7 @@ from app.routers.discord_interaction_router import router as discord_interaction
 from app.routers.menu_router import router as menu_router
 from app.routers.order_router import router as order_router
 from app.routers.recipe_router import router as recipe_router
+from app.routers.staff_call_router import router as staff_call_router
 from app.routers.store_setting_router import router as store_setting_router
 from app.routers.table_session_router import router as table_session_router
 
@@ -96,3 +97,5 @@ app.add_middleware(
 @app.get("/health", tags=["health"])
 async def health():
     return {"status": "ok"}
+
+app.include_router(staff_call_router)

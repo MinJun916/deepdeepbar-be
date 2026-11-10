@@ -20,7 +20,7 @@ from app.services.discord_table_session_notification_service import (
 
 async def enter_table(
     db: AsyncSession,
-    table_number: int,
+    table_number: int | None,
 ) -> dict:
     session_token = secrets.token_urlsafe(32)
     table_session = await create_table_session_crud(

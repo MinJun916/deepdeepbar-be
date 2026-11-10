@@ -10,7 +10,7 @@ class EnterTableRequest(BaseModel):
 
 class TableSessionResponse(BaseModel):
     id: uuid.UUID
-    table_number: int
+    table_number: int | None
     created_at: datetime
     checked_out_at: datetime | None
     checked_out_by_user_id: uuid.UUID | None

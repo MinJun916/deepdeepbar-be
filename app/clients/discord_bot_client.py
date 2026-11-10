@@ -46,11 +46,12 @@ def build_order_description(order: Order) -> str:
 
 def build_order_message_payload(order: Order) -> dict:
     is_registered = order.is_pos_registered
+    table_label = order.table_number if order.table_number is not None else "관리자"
     return {
         "allowed_mentions": {"parse": []},
         "embeds": [
             {
-                "title": f"🔔 테이블 {order.table_number} 새 주문",
+                "title": f"🔔 테이블 {table_label} 새 주문",
                 "description": build_order_description(order),
                 "color": 0x2ECC71 if not is_registered else 0x3498DB,
                 "fields": [
@@ -194,6 +195,11 @@ async def edit_order_discord_message(
 
 def build_table_session_message_payload(table_session: TableSession) -> dict:
     is_active = table_session.is_active
+    table_label = (
+        table_session.table_number
+        if table_session.table_number is not None
+        else "관리자"
+    )
     fields = [
         {
             "name": "상태",
@@ -240,9 +246,9 @@ def build_table_session_message_payload(table_session: TableSession) -> dict:
         "embeds": [
             {
                 "title": (
-                    f"🪑 테이블 {table_session.table_number} 체크인"
+                    f"🪑 테이블 {table_label} 체크인"
                     if is_active
-                    else f"✅ 테이블 {table_session.table_number} 체크아웃"
+                    else f"✅ 테이블 {table_label} 체크아웃"
                 ),
                 "color": 0x2ECC71 if is_active else 0x95A5A6,
                 "fields": fields,
@@ -292,3 +298,42 @@ async def edit_table_session_discord_message(
         message_id,
         build_table_session_message_payload(table_session),
     )
+
+
+STAFF_CALL_COMPLETE_PREFIX = "staff_call_complete:"
+
+
+def build_staff_call_message_payload(call) -> dict:
+    table_label = call.table_number if call.table_number is not None else "관리자"
+    complete = call.completed_at is not None
+    return {
+        "allowed_mentions": {"parse": []},
+        "embeds": [
+            {
+                "title": f"{'✅' if complete else '🔔'} 테이블 {table_label} 직원 호출",
+                "description": call.label,
+                "color": 0x3498DB if complete else 0xE6A23C,
+                "fields": [
+                    {
+                        "name": "상태",
+                        "value": "처리 완료" if complete else "요청 대기 중",
+                    }
+                ],
+                "timestamp": call.created_at.isoformat(),
+            }
+        ],
+        "components": [
+            {
+                "type": 1,
+                "components": [
+                    {
+                        "type": 2,
+                        "style": 3,
+                        "custom_id": f"{STAFF_CALL_COMPLETE_PREFIX}{call.id}",
+                        "label": "처리 완료",
+                        "disabled": complete,
+                    }
+                ],
+            }
+        ],
+    }

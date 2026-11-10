@@ -50,7 +50,7 @@ class OrderResponse(BaseModel):
 
     id: uuid.UUID
     table_session_id: uuid.UUID
-    table_number: int
+    table_number: int | None
     idempotency_key: uuid.UUID
     total_amount: int
     is_pos_registered: bool
@@ -61,7 +61,7 @@ class OrderResponse(BaseModel):
 
 class ActiveTableOrdersResponse(BaseModel):
     table_session_id: uuid.UUID
-    table_number: int
+    table_number: int | None
     entered_at: datetime
     order_count: int
     total_amount: int

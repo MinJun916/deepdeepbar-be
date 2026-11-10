@@ -5,8 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.clients.discord_bot_client import (
     POS_REGISTER_BUTTON_PREFIX,
     POS_UNREGISTER_BUTTON_PREFIX,
+    STAFF_CALL_COMPLETE_PREFIX,
     TABLE_CHECKOUT_BUTTON_PREFIX,
     build_order_message_payload,
+    build_staff_call_message_payload,
     build_table_session_message_payload,
 )
 from app.constants.discord_command import (
@@ -28,6 +30,7 @@ from app.services.discord_table_session_notification_service import (
     get_discord_table_session_notification,
 )
 from app.services.order_service import update_order_pos_registration
+from app.services.staff_call_service import complete_staff_call
 from app.services.store_setting_service import update_order_mode
 from app.services.table_session_service import checkout_table_session
 
@@ -268,6 +271,23 @@ async def handle_discord_interaction(
             return ephemeral_response("지원하지 않는 Discord 기능입니다.")
 
         custom_id = payload.get("data", {}).get("custom_id", "")
+        if custom_id.startswith(STAFF_CALL_COMPLETE_PREFIX):
+            validate_guild_channel_context(payload, settings.discord_table_channel_id)
+            get_discord_user_id(payload)
+            try:
+                call_id = uuid.UUID(custom_id.removeprefix(STAFF_CALL_COMPLETE_PREFIX))
+            except ValueError:
+                raise AppError(
+                    status_code=BAD_REQUEST, message="직원 호출 ID가 올바르지 않습니다."
+                ) from None
+            call = await complete_staff_call(
+                db, call_id, payload.get("message", {}).get("id")
+            )
+            return {
+                "type": UPDATE_MESSAGE,
+                "data": build_staff_call_message_payload(call),
+            }
+
         if custom_id.startswith(TABLE_CHECKOUT_BUTTON_PREFIX):
             return await handle_table_checkout_component(db, payload, custom_id)
 

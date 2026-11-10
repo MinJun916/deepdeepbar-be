@@ -16,7 +16,7 @@ from app.models.table_session_model import TableSession
 
 async def create_table_session_crud(
     db: AsyncSession,
-    table_number: int,
+    table_number: int | None,
     token_hash: str,
 ) -> TableSession:
     table_session = TableSession(

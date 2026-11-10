@@ -62,7 +62,7 @@ class Order(BaseModel):
         ForeignKey("table_sessions.id"),
         nullable=False,
     )
-    table_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    table_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
     idempotency_key: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         nullable=False,

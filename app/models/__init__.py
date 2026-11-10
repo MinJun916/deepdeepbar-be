@@ -10,11 +10,14 @@ from app.models.order_model import Order
 from app.models.recipe_model import Recipe
 from app.models.recipe_step_model import RecipeStep
 from app.models.refresh_token_model import RefreshToken
+from app.models.staff_call_model import StaffCall, StaffCallOption
 from app.models.store_setting_model import StoreSetting
 from app.models.table_session_model import TableSession
 from app.models.user_model import User
 
 __all__ = [
+    "StaffCall",
+    "StaffCallOption",
     "Menu",
     "DiscordOrderNotification",
     "DiscordTableSessionNotification",

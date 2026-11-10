@@ -28,7 +28,7 @@ class TableSession(BaseModel):
         ),
     )
 
-    table_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    table_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
     token_hash: Mapped[str] = mapped_column(
         String(64),
         nullable=False,

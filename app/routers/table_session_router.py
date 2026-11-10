@@ -45,6 +45,18 @@ async def enter_table_session(
     return await enter_table(db, table_data.table_number)
 
 
+@router.post(
+    "/admin-enter",
+    response_model=EnterTableResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def enter_admin_session(
+    current_user: authorized_admin,
+    db: db,
+):
+    return await enter_table(db, None)
+
+
 @router.get("/current", response_model=TableSessionResponse)
 async def read_current_table_session(
     session_token: table_session_token,

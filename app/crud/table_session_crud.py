@@ -26,7 +26,8 @@ async def create_table_session_crud(
     db.add(table_session)
 
     try:
-        db.add(DiscordTableSessionNotification(table_session=table_session))
+        if table_number is not None:
+            db.add(DiscordTableSessionNotification(table_session=table_session))
         await db.commit()
     except IntegrityError:
         await db.rollback()

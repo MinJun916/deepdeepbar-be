@@ -28,7 +28,8 @@ async def enter_table(
         table_number,
         hash_token(session_token),
     )
-    await try_dispatch_discord_table_session_notification(db, table_session.id)
+    if table_number is not None:
+        await try_dispatch_discord_table_session_notification(db, table_session.id)
 
     return {
         "id": table_session.id,

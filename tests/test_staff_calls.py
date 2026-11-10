@@ -93,7 +93,7 @@ class StaffCallFlowTests(IsolatedAsyncioTestCase):
             patch(
                 "app.services.staff_call_service.require_channel_id",
                 return_value="channel",
-            ),
+            ) as require_channel,
             patch(
                 "app.services.staff_call_service.create_discord_message",
                 AsyncMock(return_value="message"),
@@ -103,6 +103,11 @@ class StaffCallFlowTests(IsolatedAsyncioTestCase):
             self.assertEqual(call.notification_status, "sent")
             self.assertEqual(call.discord_message_id, "message")
             send.assert_awaited_once()
+            from app.core.config import settings
+
+            require_channel.assert_called_once_with(
+                settings.discord_order_channel_id, "직원 호출"
+            )
             db.add.assert_not_called()
 
     async def test_completion_binds_message_and_is_idempotent(self):
@@ -159,7 +164,8 @@ class StaffCallInteractionTests(IsolatedAsyncioTestCase):
         with (
             patch.object(settings, "discord_application_id", "app"),
             patch.object(settings, "discord_guild_id", "guild"),
-            patch.object(settings, "discord_table_channel_id", "expected"),
+            patch.object(settings, "discord_table_channel_id", "legacy"),
+            patch.object(settings, "discord_order_channel_id", "expected"),
             patch(
                 "app.services.discord_interaction_service.complete_staff_call",
                 AsyncMock(),
@@ -239,16 +245,57 @@ class StaffCallCreationTests(IsolatedAsyncioTestCase):
             patch(
                 "app.services.staff_call_service.require_channel_id",
                 return_value="channel",
-            ),
+            ) as require_channel,
             patch(
                 "app.services.staff_call_service.create_discord_message",
                 AsyncMock(return_value="message"),
             ),
         ):
             call = await create_staff_call(db, "token", option_id)
+            from app.core.config import settings
+
+            require_channel.assert_called_once_with(
+                settings.discord_order_channel_id, "직원 호출"
+            )
             self.assertEqual(call.label, "현재 요청 문구")
             self.assertEqual(call.table_session_id, session.id)
             self.assertIsNone(call.table_number)
             self.assertEqual(call.option_id, option_id)
             self.assertEqual(call.notification_status, "sent")
             db.add.assert_called_once()
+
+
+class StaffCallOrderChannelTests(IsolatedAsyncioTestCase):
+    async def test_order_and_existing_table_messages_can_complete(self):
+        from app.core.config import settings
+        from app.services.discord_interaction_service import handle_discord_interaction
+
+        for channel in ("order", "legacy-table"):
+            call_id = uuid.uuid4()
+            payload = {
+                "application_id": "app",
+                "guild_id": "guild",
+                "channel_id": channel,
+                "type": 3,
+                "data": {"custom_id": f"staff_call_complete:{call_id}"},
+                "member": {"user": {"id": "staff"}},
+                "message": {"id": "message"},
+            }
+            db = AsyncMock()
+            with (
+                patch.object(settings, "discord_application_id", "app"),
+                patch.object(settings, "discord_guild_id", "guild"),
+                patch.object(settings, "discord_order_channel_id", "order"),
+                patch.object(settings, "discord_table_channel_id", "legacy-table"),
+                patch(
+                    "app.services.discord_interaction_service.complete_staff_call",
+                    AsyncMock(),
+                ) as complete,
+                patch(
+                    "app.services.discord_interaction_service.build_staff_call_message_payload",
+                    return_value={},
+                ),
+            ):
+                response = await handle_discord_interaction(db, payload)
+                self.assertEqual(response["type"], 7)
+                complete.assert_awaited_once_with(db, call_id, "message")

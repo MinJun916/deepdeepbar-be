@@ -272,7 +272,11 @@ async def handle_discord_interaction(
 
         custom_id = payload.get("data", {}).get("custom_id", "")
         if custom_id.startswith(STAFF_CALL_COMPLETE_PREFIX):
-            validate_guild_channel_context(payload, settings.discord_table_channel_id)
+            # Previously sent table-channel messages must remain actionable.
+            channel_id = settings.discord_order_channel_id
+            if payload.get("channel_id") == settings.discord_table_channel_id:
+                channel_id = settings.discord_table_channel_id
+            validate_guild_channel_context(payload, channel_id)
             get_discord_user_id(payload)
             try:
                 call_id = uuid.UUID(custom_id.removeprefix(STAFF_CALL_COMPLETE_PREFIX))

@@ -30,7 +30,7 @@ def build_order_description(order: Order) -> str:
     for index, item in enumerate(order.items, start=1):
         menu_name = truncate(item.menu_name, 80)
         line = (
-            f"**{index}. {menu_name}** (`{item.price_type}`) "
+            f"## **{index}. {menu_name}** (`{item.price_type}`) "
             f"× {item.quantity} — {item.line_total:,}원"
         )
 

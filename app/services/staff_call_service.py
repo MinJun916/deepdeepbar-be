@@ -67,7 +67,7 @@ async def create_staff_call(db: AsyncSession, token: str, option_id: uuid.UUID):
     await db.commit()
     call_id = call.id
     try:
-        channel = require_channel_id(settings.discord_table_channel_id, "직원 호출")
+        channel = require_channel_id(settings.discord_order_channel_id, "직원 호출")
         message_id = await create_discord_message(
             channel, build_staff_call_message_payload(call)
         )

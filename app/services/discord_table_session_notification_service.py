@@ -7,7 +7,7 @@ from app.clients.discord_bot_client import (
     edit_table_session_discord_message,
     send_table_session_discord_message,
 )
-from app.constants.status_code import BAD_GATEWAY, NOT_FOUND
+from app.constants.status_code import BAD_GATEWAY, BAD_REQUEST, NOT_FOUND
 from app.core.exceptions import AppError
 from app.core.logger import logger
 from app.crud.discord_table_session_notification_crud import (
@@ -41,6 +41,12 @@ async def dispatch_discord_table_session_notification(
         raise AppError(
             status_code=NOT_FOUND,
             message="테이블 세션을 찾을 수 없습니다.",
+        )
+
+    if table_session.table_number is None:
+        raise AppError(
+            status_code=BAD_REQUEST,
+            message="관리자 입장은 Discord 체크인 알림 대상이 아닙니다.",
         )
 
     notification, delivery_token = await claim_discord_table_session_notification_crud(

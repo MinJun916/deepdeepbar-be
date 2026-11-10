@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, patch
 import httpx
 
 from app.clients.discord_bot_client import (
+    build_order_description,
     build_order_message_payload,
     build_table_session_message_payload,
 )
@@ -74,7 +75,7 @@ class AdminEntryTests(IsolatedAsyncioTestCase):
             response = await self.client.post("/table-sessions/enter", json=body)
             self.assertEqual(response.status_code, 422)
 
-    async def test_admin_session_uses_existing_token_and_notification_flow(self):
+    async def test_admin_session_issues_token_without_checkin_notification(self):
         with (
             patch(
                 "app.services.table_session_service.create_table_session_crud",
@@ -88,7 +89,44 @@ class AdminEntryTests(IsolatedAsyncioTestCase):
             result = await enter_table(self.db, None)
             self.assertIsNone(create.call_args.args[1])
             self.assertNotEqual(result["session_token"], create.call_args.args[2])
+            notify.assert_not_awaited()
+
+    async def test_regular_entry_still_sends_checkin_notification(self):
+        with (
+            patch(
+                "app.services.table_session_service.create_table_session_crud",
+                AsyncMock(return_value=session_data(3)),
+            ),
+            patch(
+                "app.services.table_session_service.try_dispatch_discord_table_session_notification",
+                AsyncMock(),
+            ) as notify,
+        ):
+            result = await enter_table(self.db, 3)
             notify.assert_awaited_once_with(self.db, result["id"])
+
+    async def test_admin_checkin_cannot_be_sent_via_retry(self):
+        from app.core.exceptions import AppError
+        from app.services.discord_table_session_notification_service import (
+            retry_discord_table_session_notification,
+        )
+
+        with (
+            patch(
+                "app.services.discord_table_session_notification_service.find_table_session_by_id_crud",
+                AsyncMock(
+                    return_value=SimpleNamespace(table_number=None, deleted_at=None)
+                ),
+            ),
+            patch(
+                "app.services.discord_table_session_notification_service.send_table_session_discord_message",
+                AsyncMock(),
+            ) as send,
+        ):
+            with self.assertRaises(AppError) as raised:
+                await retry_discord_table_session_notification(self.db, uuid.uuid4())
+            self.assertEqual(raised.exception.status_code, 400)
+            send.assert_not_awaited()
 
 
 class AdminNotificationTests(TestCase):
@@ -110,3 +148,15 @@ class AdminNotificationTests(TestCase):
             self.assertEqual(
                 session_payload["embeds"][0]["title"], f"🪑 테이블 {label} 체크인"
             )
+
+
+class OrderDescriptionTests(TestCase):
+    def test_order_items_use_large_headings_and_keep_overflow_notice(self):
+        item = SimpleNamespace(
+            menu_name="진토닉", price_type="default", quantity=2, line_total=20000
+        )
+        text = build_order_description(SimpleNamespace(items=[item]))
+        self.assertEqual(text, "## **1. 진토닉** (`default`) × 2 — 20,000원")
+        text = build_order_description(SimpleNamespace(items=[item] * 200))
+        self.assertLessEqual(len(text), 4096)
+        self.assertIn("개 항목", text)

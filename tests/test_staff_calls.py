@@ -33,9 +33,14 @@ class StaffCallValidationTests(TestCase):
                 created_at=datetime.now(timezone.utc),
             )
             payload = build_staff_call_message_payload(call)
+            self.assertEqual(payload["embeds"][0]["description"], "## 물 주세요!")
             self.assertIn(f"테이블 {label} 직원 호출", payload["embeds"][0]["title"])
             self.assertFalse(payload["components"][0]["components"][0]["disabled"])
             call.completed_at = datetime.now(timezone.utc)
+            self.assertEqual(
+                build_staff_call_message_payload(call)["embeds"][0]["description"],
+                "## 물 주세요!",
+            )
             self.assertTrue(
                 build_staff_call_message_payload(call)["components"][0]["components"][
                     0

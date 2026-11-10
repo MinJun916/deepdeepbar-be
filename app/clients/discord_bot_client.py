@@ -311,7 +311,7 @@ def build_staff_call_message_payload(call) -> dict:
         "embeds": [
             {
                 "title": f"{'✅' if complete else '🔔'} 테이블 {table_label} 직원 호출",
-                "description": call.label,
+                "description": f"## {call.label}",
                 "color": 0x3498DB if complete else 0xE6A23C,
                 "fields": [
                     {
